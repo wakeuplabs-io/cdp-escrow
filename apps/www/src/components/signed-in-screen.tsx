@@ -5,8 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPublicClient, http, formatEther } from "viem";
 import { baseSepolia } from "viem/chains";
 
-import Header from "@/components/header";
-import Transaction from "@/components/transaction";
+import Transaction from "@/components/smart-account-trasaction";
 import UserBalance from "@/components/user-balance";
 
 /**
@@ -46,7 +45,9 @@ export default function SignedInScreen() {
 
   return (
     <>
-      <Header />
+      <header>
+        <div>{evmAddress}</div>
+      </header>
       <main className="main flex-col-container flex-grow">
         <div className="main-inner flex-col-container">
           <div className="card card--user-balance">

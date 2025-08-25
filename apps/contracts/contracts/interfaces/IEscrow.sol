@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOracleVerifier} from "./IOracleVerifier.sol";
 import {IEscrowErrors} from "./IEscrow.errors.sol";
 import {IEscrowEvents} from "./IEscrow.events.sol";
 import {IEscrowStructs} from "./IEscrow.structs.sol";
@@ -10,31 +9,38 @@ import {IEscrowStructs} from "./IEscrow.structs.sol";
 // Escrow contracts for bookings
 
 interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
-    /// @notice Owner calls this function to create an item for sale
-    function createItem(
+    /// @notice Owner calls this function to create a challenge
+    function createChallenge(
         string calldata metadataURI,
-        uint256 price,
-        address verifier
+        uint256 poolSize,
+        uint256 deadline
     ) external;
 
-    /// @notice Read item instance
-    function getItem(uint256 itemId) external view returns (Item memory);
+    /// @notice Read challenge instance
+    function getChallenge(uint256 challengeId) external view returns (Challenge memory);
 
-    /// @notice User calls this function to create a request
-    function createRequest(uint256 itemId, string[] calldata args) external;
+    /// @notice Read all challenges
+    function getChallenges() external view returns (Challenge[] memory);
 
-    /// @notice Read request instance
-    function getRequest(uint256 requestId) external view returns (Request memory);
+    /// @notice User calls this function to create a submission
+    function createSubmission(uint256 challengeId, string calldata submissionURI) external;
 
-    /// @notice Provider calls here to provide the result for the user request. Here we call the oracle verifier to verify the result.
-    function resolveRequest(
-        uint256 _requestId,
-        string[] calldata args
+    /// @notice Read submission instance
+    function getSubmission(uint256 challengeId, uint256 submissionId) external view returns (Submission memory);
+
+    /// @notice Read all submissions for a challenge
+    function getSubmissions(uint256 challengeId) external view returns (Submission[] memory);
+
+    /// @notice Owner calls this function to resolve a challenge
+    function resolveChallenge(
+        uint256 challengeId,
+        address[] calldata winners,
+        uint256[] calldata invalidSubmissions
     ) external;
 
-    /// @notice This function is called back from the chainlink client or resolver determining weather or not the request is valid.
-    function fulfillRequest(uint256 _requestId, bool result) external;
+    /// @notice User calls to withdraw funds from the escrow
+    function withdrawFunds(uint256 amount) external;
 
-    /// @notice if deadline for resolve is reached, and we're not waiting for oracle confirmation the user can claim back their funds
-    function refundRequest(uint256 requestId) external;
+    /// @notice Read the balance of an account
+    function getBalance(address account) external view returns (uint256);
 }

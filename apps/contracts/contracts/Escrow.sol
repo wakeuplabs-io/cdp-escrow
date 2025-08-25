@@ -3,166 +3,179 @@ pragma solidity ^0.8.28;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOracleVerifier} from "./interfaces/IOracleVerifier.sol";
 import {IEscrow} from "./interfaces/IEscrow.sol";
 
 // Escrow contracts for bookings
 
 contract Escrow is Ownable, IEscrow {
-    // Store items for sale
-    uint256 public itemsCount;
-    mapping(uint256 => Item) public items;
-
-    // Store requests for items
-    uint256 public requestsCount;
-    mapping(uint256 => Request) public requests;
-
-    // global timeout for requests
-    uint256 public timeout;
-    address public resolver;
-
-    // Token use for payments
+    // Token used for payments
     IERC20 public token;
 
-    constructor(
-        address _owner,
-        address _resolver,
-        uint256 _timeout,
-        address _token
-    ) Ownable(_owner) {
-        resolver = _resolver;
-        timeout = _timeout;
+    // Store challenges
+    uint256 public challengesCount;
+    mapping(uint256 => Challenge) public challenges;
+
+    // Withdrawal balances
+    mapping(address => uint256) public balances;
+
+    // Store submissions
+    mapping(uint256 => uint256) public submissionsCount;
+    mapping(uint256 => mapping(uint256 => Submission)) public submissions;
+    mapping(uint256 => mapping(address => bool)) public submitted;
+
+    constructor(address _owner, address _token) Ownable(_owner) {
         token = IERC20(_token);
     }
 
-    modifier onlyResolver() {
-        require(
-            msg.sender == resolver,
-            "onlyResolver: only the resolver can resolve the request"
-        );
-        _;
-    }
-
-    modifier onlyRequestor(uint256 requestId) {
-        require(
-            requests[requestId].requestor == msg.sender,
-            "onlyRequestor: only the requestor can resolve the request"
-        );
-        _;
-    }
-
-    modifier onlyOracleVerifier(uint256 requestId) {
-        require(
-            address(items[requests[requestId].itemId].verifier) == msg.sender,
-            "onlyOracleVerifier: only the oracle verifier can fulfill the request"
-        );
-        _;
-    }
-
-    modifier onlyAfterTimeout(uint256 requestId) {
-        require(
-            block.timestamp > requests[requestId].deadline,
-            "onlyAfterTimeout: the request has not timed out"
-        );
-        _;
-    }
-
     /// @inheritdoc IEscrow
-    function createItem(
+    function createChallenge(
         string calldata metadataURI,
-        uint256 price,
-        address verifier
+        uint256 poolSize,
+        uint256 deadline
     ) public onlyOwner {
-        items[itemsCount] = Item({
-            price: price,
-            verifier: IOracleVerifier(verifier),
+        challenges[challengesCount] = Challenge({
+            poolSize: poolSize,
+            deadline: deadline,
             metadataURI: metadataURI
         });
-        itemsCount++;
+        
+        emit ChallengeCreated(challengesCount, metadataURI, poolSize, deadline);
+        challengesCount++;
     }
 
     /// @inheritdoc IEscrow
-    function getItem(uint256 itemId) public view returns (Item memory) {
-        return items[itemId];
+    function getChallenge(uint256 challengeId) public view returns (Challenge memory) {
+        return challenges[challengeId];
     }
 
     /// @inheritdoc IEscrow
-    function createRequest(uint256 itemId, string[] calldata args) public {
-        requests[requestsCount] = Request({
-            itemId: itemId,
-            requestor: msg.sender,
-            deadline: block.timestamp + timeout,
-            status: RequestStatus.PENDING,
-            args: args
+    function getChallenges() public view returns (Challenge[] memory) {
+        Challenge[] memory challengeList = new Challenge[](challengesCount);
+        for (uint256 i = 0; i < challengesCount; i++) {
+            challengeList[i] = challenges[i];
+        }
+        return challengeList;
+    }
+
+    /// @notice Submit a challenge submission
+    function createSubmission(uint256 challengeId, string calldata submissionURI) public {
+        if (submitted[challengeId][msg.sender]) {
+            revert AlreadySubmitted();
+        }
+
+        submissions[challengeId][submissionsCount[challengeId]] = Submission({
+            challengeId: challengeId,
+            submitter: msg.sender,
+            submissionTime: block.timestamp,
+            submissionURI: submissionURI
         });
-        requestsCount++;
-
-        // Pulls erc20funds from the mssage sender
-        token.transferFrom(msg.sender, address(this), items[itemId].price);
-
-        emit RequestCreated(requestsCount);
+        submissionsCount[challengeId]++;
+        submitted[challengeId][msg.sender] = true;
+        emit SubmissionCreated(submissionsCount[challengeId], challengeId, msg.sender);
     }
 
     /// @inheritdoc IEscrow
-    function getRequest(uint256 requestId) public view returns (Request memory) {
-        return requests[requestId];
+    function getSubmission(
+        uint256 challengeId,
+        uint256 submissionId
+    ) public view returns (Submission memory) {
+        return submissions[challengeId][submissionId];
     }
 
     /// @inheritdoc IEscrow
-    function resolveRequest(
-        uint256 _requestId,
-        string[] calldata args
-    ) public onlyResolver {
-        if (requests[_requestId].status != RequestStatus.PENDING) {
-            revert RequestNotPending();
+    function getSubmissions(uint256 challengeId) public view returns (Submission[] memory) {
+        uint256 count = submissionsCount[challengeId];
+        Submission[] memory submissionList = new Submission[](count);
+        for (uint256 i = 0; i < count; i++) {
+            submissionList[i] = submissions[challengeId][i];
+        }
+        return submissionList;
+    }
+
+    /// @inheritdoc IEscrow
+    function resolveChallenge(
+        uint256 challengeId,
+        address[] calldata winners,
+        uint256[] calldata invalidSubmissions
+    ) public onlyOwner {
+        if (challenges[challengeId].deadline > block.timestamp) {
+            revert ChallengeNotClosed();
         }
 
-        // Call oracle verifier to corroborate the order
-        items[requests[_requestId].itemId].verifier.verify(
-            _requestId,
-            requests[_requestId].args,
-            args
-        );
+        // filter out winners and invalid submissions to get the rest (losers)
+        address[] memory losers = new address[](submissionsCount[challengeId] - winners.length - invalidSubmissions.length);
+        uint256 loserIndex = 0;
+        for (uint256 i = 0; i < submissionsCount[challengeId]; i++) {
+            address submitter = submissions[challengeId][i].submitter;
+            bool isWinner = false;
+            bool isInvalid = false;
+            
+            // Check if submitter is a winner
+            for (uint256 j = 0; j < winners.length; j++) {
+                if (submitter == winners[j]) {
+                    isWinner = true;
+                    break;
+                }
+            }
+            
+            // Check if submission is invalid
+            for (uint256 j = 0; j < invalidSubmissions.length; j++) {
+                if (i == invalidSubmissions[j]) {
+                    isInvalid = true;
+                    break;
+                }
+            }
+            
+            // If not winner and not invalid, add to losers
+            if (!isWinner && !isInvalid) {
+                losers[loserIndex] = submitter;
+                loserIndex++;
+            }
+        }
 
-        requests[_requestId].status = RequestStatus.VALIDATING;
-    }
-
-    /// @inheritdoc IEscrow
-    function fulfillRequest(
-        uint256 _requestId,
-        bool result
-    ) public onlyOracleVerifier(_requestId) {
-        if (result) {
-            requests[_requestId].status = RequestStatus.RESOLVED;
-            emit RequestResolved(_requestId);
-
-            // transfer funds to the requestor
-            token.transfer(
-                requests[_requestId].requestor,
-                items[requests[_requestId].itemId].price
-            );
+        // Reward distribution: Winners get 70% if there are losers, otherwise 100%
+        uint256 totalPool = challenges[challengeId].poolSize;
+        if (losers.length > 0) {
+            // Winners get 70%, losers get 30%
+            uint256 winnerPoolSize = (totalPool * 70) / 100;
+            uint256 loserPoolSize = totalPool - winnerPoolSize;
+            
+            // Distribute to winners
+            uint256 winnerReward = winnerPoolSize / winners.length;
+            for (uint256 i = 0; i < winners.length; i++) {
+                balances[winners[i]] += winnerReward;
+            }
+            
+            // Distribute to losers
+            uint256 loserReward = loserPoolSize / losers.length;
+            for (uint256 i = 0; i < losers.length; i++) {
+                balances[losers[i]] += loserReward;
+            }
         } else {
-            // back to pending to give the provider another chance to resolve the request
-            requests[_requestId].status = RequestStatus.PENDING;
-            emit RequestFailed(_requestId);
+            // Winners take 100% of the pool
+            uint256 winnerReward = totalPool / winners.length;
+            for (uint256 i = 0; i < winners.length; i++) {
+                balances[winners[i]] += winnerReward;
+            }
         }
+        
+        emit ChallengeResolved(challengeId, winners);
     }
 
     /// @inheritdoc IEscrow
-    function refundRequest(
-        uint256 requestId
-    ) public onlyRequestor(requestId) onlyAfterTimeout(requestId) {
-        if (requests[requestId].status != RequestStatus.PENDING) {
-            revert RequestNotPending();
+    function withdrawFunds(uint256 amount) public {
+        if (balances[msg.sender] < amount) {
+            revert InsufficientBalance();
         }
-
-        requests[requestId].status = RequestStatus.REFUNDED;
-        emit RequestRefunded(requestId);
 
         // transfer funds back to the requestor
-        token.transfer(
-            requests[requestId].requestor,
-            items[requests[requestId].itemId].price
-        );
+        token.transfer(msg.sender, amount);
+        balances[msg.sender] -= amount;
+        emit FundsWithdrawn(msg.sender, amount);
+    }
+
+    /// @inheritdoc IEscrow
+    function getBalance(address account) public view returns (uint256) {
+        return balances[account];
     }
 }
