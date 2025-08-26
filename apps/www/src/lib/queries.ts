@@ -1,4 +1,4 @@
 export const QueryKeyFactory = {
-  challenge: (challengeId: string) => ["challenges", challengeId],
+  challenge: (challengeId: number) => ["challenges", challengeId],
   challenges: () => ["challenges"],
 };

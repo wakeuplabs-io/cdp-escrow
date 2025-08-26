@@ -26,6 +26,7 @@ export const challengeMetadataSchema = z.object({
 export const challengeSchema = z.object({
   id: z.number().int().positive(),
   metadata: challengeMetadataSchema,
+  author: z.string(),
   deadline: z.date(),
   createdAt: z.date(),
   status: challengeStatusSchema,
