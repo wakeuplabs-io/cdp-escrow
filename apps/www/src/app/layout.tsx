@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import "./globals.css";
+import type { Metadata } from "next";
+import Providers from "@/providers";
 
 export const metadata: Metadata = {
   title: "CDP Next.js StarterKit",
@@ -13,11 +14,17 @@ export const metadata: Metadata = {
  * @param props.children - { React.ReactNode } - The children to wrap
  * @returns The wrapped children
  */
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
-        <div className="root">{children}</div>
+        <div className="root">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );
