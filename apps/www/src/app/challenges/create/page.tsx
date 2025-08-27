@@ -25,6 +25,7 @@ export default function CreateChallengePage() {
   const [preview, setPreview] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [deadline, setDeadline] = useState<Date>(new Date());
+  const [poolSize, setPoolSize] = useState("");
 
   const router = useRouter();
 
@@ -94,6 +95,20 @@ export default function CreateChallengePage() {
               placeholder="Challenge title"
               className="w-full h-full outline-none mt-4"
               onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* Title input */}
+          <div className="bg-muted p-4 rounded-lg relative mb-4">
+            <span className="text-xs text-muted-foreground absolute left-4 top-2">
+              Pool Size (USDC)
+            </span>
+            <input
+              type="text"
+              value={poolSize}
+              placeholder="Pool size"
+              className="w-full h-full outline-none mt-4"
+              onChange={(e) => setPoolSize(e.target.value)}
             />
           </div>
 
@@ -190,6 +205,17 @@ export default function CreateChallengePage() {
                 rows={10}
               />
             )}
+          </div>
+
+          {/* How it works */}
+          <div className="">
+            <div className="font-medium mb-2">How it works</div>
+            <div className="text-sm text-muted-foreground">
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
+              assumenda eum aperiam facere. Incidunt natus sunt voluptatem sit
+              at sapiente fugiat voluptatum recusandae repellendus voluptatibus
+              non quibusdam sed, facere dolorum.
+            </div>
           </div>
         </div>
       </div>

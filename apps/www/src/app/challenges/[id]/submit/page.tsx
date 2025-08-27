@@ -125,6 +125,17 @@ export default function CreateChallengePage() {
               />
             )}
           </div>
+
+
+          <div className="">
+            <div className="font-medium mb-2">How it works</div>
+            <div className="text-sm text-muted-foreground">
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
+              assumenda eum aperiam facere. Incidunt natus sunt voluptatem sit
+              at sapiente fugiat voluptatum recusandae repellendus voluptatibus
+              non quibusdam sed, facere dolorum.
+            </div>
+          </div>
         </div>
       </div>
     </div>

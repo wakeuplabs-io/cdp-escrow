@@ -43,10 +43,10 @@ export default function Index() {
   return (
     <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <div className="flex items-center gap-4 w-full">
+        <Link href="/challenges" className="flex items-center gap-4 w-full">
           <AudioWaveformIcon className="w-4 h-4" />
           <h1 className="text-xl font-bold">Acme Challenges</h1>
-        </div>
+        </Link>
 
         <AccountManager />
       </div>
@@ -179,9 +179,9 @@ export default function Index() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span>1000</span>
-                <span>USDC</span>
+              <div className="flex items-end gap-2">
+                <span className="text-2xl font-bold">1000</span>
+                <span className="text-sm text-muted-foreground mb-0.5">USDC</span>
               </div>
             </div>
           </div>

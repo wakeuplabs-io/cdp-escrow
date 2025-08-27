@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IEscrow} from "./interfaces/IEscrow.sol";
 
 // Escrow contracts for bookings
 
-contract Escrow is Ownable, IEscrow {
+contract Escrow is IEscrow {
     // Token used for payments
     IERC20 public token;
 
     // Store challenges
     uint256 public challengesCount;
     mapping(uint256 => Challenge) public challenges;
+
+    // Store challenge for which the user is the admin for easy retrieval
+    mapping(address => uint256[]) public adminChallenges;
 
     // Withdrawal balances
     mapping(address => uint256) public balances;
@@ -23,8 +25,15 @@ contract Escrow is Ownable, IEscrow {
     mapping(uint256 => mapping(uint256 => Submission)) public submissions;
     mapping(uint256 => mapping(address => bool)) public submitted;
 
-    constructor(address _owner, address _token) Ownable(_owner) {
+    constructor(address _token) {
         token = IERC20(_token);
+    }
+
+    modifier onlyAdmin(uint256 challengeId) {
+        if (challenges[challengeId].admin != msg.sender) {
+            revert OnlyAdmin();
+        }
+        _;
     }
 
     /// @inheritdoc IEscrow
@@ -32,11 +41,13 @@ contract Escrow is Ownable, IEscrow {
         string calldata metadataURI,
         uint256 poolSize,
         uint256 deadline
-    ) public onlyOwner {
+    ) public {
         challenges[challengesCount] = Challenge({
+            uri: metadataURI,
             poolSize: poolSize,
-            deadline: deadline,
-            metadataURI: metadataURI
+            endsAt: deadline,
+            createdAt: block.timestamp,
+            admin: msg.sender
         });
         
         emit ChallengeCreated(challengesCount, metadataURI, poolSize, deadline);
@@ -49,29 +60,45 @@ contract Escrow is Ownable, IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function getChallenges() public view returns (Challenge[] memory) {
-        Challenge[] memory challengeList = new Challenge[](challengesCount);
-        for (uint256 i = 0; i < challengesCount; i++) {
-            challengeList[i] = challenges[i];
+    function getChallenges(uint256 startIndex, uint256 count) public view returns (Challenge[] memory) {
+        uint256 endIndex = startIndex + count;
+        if (endIndex > challengesCount) {
+            endIndex = challengesCount;
+        }
+        Challenge[] memory challengeList = new Challenge[](endIndex - startIndex);
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            challengeList[i - startIndex] = challenges[i];
         }
         return challengeList;
     }
 
-    /// @notice Submit a challenge submission
-    function createSubmission(uint256 challengeId, string calldata submissionURI) public {
+    /// @inheritdoc IEscrow
+    function getChallengesCount() public view returns (uint256) {
+        return challengesCount;
+    }
+
+    /// @inheritdoc IEscrow
+    function getAdminChallenges(address admin) public view returns (uint256[] memory) {
+        return adminChallenges[admin];
+    }
+
+    /// @inheritdoc IEscrow
+    function createSubmission(uint256 challengeId, string calldata contact,  string calldata submissionURI) public {
         if (submitted[challengeId][msg.sender]) {
             revert AlreadySubmitted();
         }
 
-        submissions[challengeId][submissionsCount[challengeId]] = Submission({
-            challengeId: challengeId,
+        uint256 submissionId = submissionsCount[challengeId];
+
+        submissions[challengeId][submissionId] = Submission({
+            uri: submissionURI,
+            contact: contact,
             submitter: msg.sender,
-            submissionTime: block.timestamp,
-            submissionURI: submissionURI
+            createdAt: block.timestamp
         });
         submissionsCount[challengeId]++;
         submitted[challengeId][msg.sender] = true;
-        emit SubmissionCreated(submissionsCount[challengeId], challengeId, msg.sender);
+        emit SubmissionCreated(submissionId, challengeId, msg.sender);
     }
 
     /// @inheritdoc IEscrow
@@ -83,13 +110,21 @@ contract Escrow is Ownable, IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function getSubmissions(uint256 challengeId) public view returns (Submission[] memory) {
-        uint256 count = submissionsCount[challengeId];
-        Submission[] memory submissionList = new Submission[](count);
-        for (uint256 i = 0; i < count; i++) {
+    function getSubmissions(uint256 challengeId, uint256 startIndex, uint256 count) public view returns (Submission[] memory) {
+        uint256 endIndex = startIndex + count;
+        if (endIndex > submissionsCount[challengeId]) {
+            endIndex = submissionsCount[challengeId];
+        }
+        Submission[] memory submissionList = new Submission[](endIndex - startIndex);
+        for (uint256 i = startIndex; i < endIndex; i++) {
             submissionList[i] = submissions[challengeId][i];
         }
         return submissionList;
+    }
+
+    /// @inheritdoc IEscrow
+    function getSubmissionsCount(uint256 challengeId) public view returns (uint256) {
+        return submissionsCount[challengeId];
     }
 
     /// @inheritdoc IEscrow
@@ -97,8 +132,8 @@ contract Escrow is Ownable, IEscrow {
         uint256 challengeId,
         address[] calldata winners,
         uint256[] calldata invalidSubmissions
-    ) public onlyOwner {
-        if (challenges[challengeId].deadline > block.timestamp) {
+    ) public onlyAdmin(challengeId) {
+        if (challenges[challengeId].endsAt > block.timestamp) {
             revert ChallengeNotClosed();
         }
 
@@ -163,15 +198,15 @@ contract Escrow is Ownable, IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function withdrawFunds(uint256 amount) public {
+    function withdraw(uint256 amount, address to) public {
         if (balances[msg.sender] < amount) {
             revert InsufficientBalance();
         }
 
         // transfer funds back to the requestor
-        token.transfer(msg.sender, amount);
+        token.transfer(to, amount);
         balances[msg.sender] -= amount;
-        emit FundsWithdrawn(msg.sender, amount);
+        emit FundsWithdrawn(msg.sender, to, amount);
     }
 
     /// @inheritdoc IEscrow

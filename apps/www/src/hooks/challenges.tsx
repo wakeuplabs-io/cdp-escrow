@@ -2,18 +2,14 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { QueryKeyFactory } from "@/lib/queries";
 import { Challenge } from "@/types/challenges";
 
-export const useChallenge = (id: number) => {
-  return useQuery({
-    queryKey: QueryKeyFactory.challenge(id),
-    queryFn: async () => {
-      const mockChallenge: Challenge = {
-        id: 1,
-        status: "active",
-        deadline: new Date(),
-        createdAt: new Date(),
-        metadata: {
-          title: "[ARFC] Automation of the Slope2 Parameter via Risk Oracles",
-          body: `## Motivation and Context
+const mockChallenge: Challenge = {
+  id: 1,
+  status: "active",
+  deadline: new Date(),
+  createdAt: new Date(),
+  metadata: {
+    title: "[ARFC] Automation of the Slope2 Parameter via Risk Oracles",
+    body: `## Motivation and Context
 
 DeFi lending markets today share two fundamental vulnerabilities: large, discrete supplier exits and hyper-elastic, thin-margin borrower demand fueled by extensive rehypothecation. While these characteristics are common across pools, their combined impact is magnified significantly in whale-dominated and leverage-heavy environments such as ETH, USDT, and USDe.
 
@@ -143,10 +139,16 @@ Collectively, they define a rate curve that is stringent yet predictable, adapti
 ![11.png](ipfs://bafkreiffxxhbgd3y42lasjmfnm7qojfz2eigs4l55l7xrtd3bo5w63uzza)
 ![12.png](ipfs://bafkreiehkfbedmbflteszlsz6b4y23kawkw2znt4vk6k5e2f4gg3coof3a)
 `,
-          deadline: new Date(),
-        },
-        author: "0x1234567890123456789012345678901234567890",
-      };
+    deadline: new Date(),
+  },
+  author: "0x1234567890123456789012345678901234567890",
+};
+
+export const useChallenge = (id: number) => {
+  return useQuery({
+    queryKey: QueryKeyFactory.challenge(id),
+    queryFn: async () => {
+    
       return mockChallenge;
     },
   });
@@ -157,7 +159,7 @@ export const useChallenges = () => {
     queryKey: QueryKeyFactory.challenges(),
     queryFn: async ({ pageParam }) => {
       return {
-        challenges: [] as Challenge[],
+        challenges: [mockChallenge],
         hasNextPage: false,
         nextPage: 0,
       };

@@ -48,4 +48,10 @@ interface IEscrowErrors {
      * @dev Prevents users from withdrawing funds they haven't earned or already withdrawn
      */
     error InsufficientBalance();
+
+    /**
+     * @notice Thrown when a user attempts to perform an action that requires them to be the admin of the challenge
+     * @dev Prevents users from performing actions that require them to be the admin of the challenge
+     */
+    error OnlyAdmin();
 }

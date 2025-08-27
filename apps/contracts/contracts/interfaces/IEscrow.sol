@@ -20,16 +20,25 @@ interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
     function getChallenge(uint256 challengeId) external view returns (Challenge memory);
 
     /// @notice Read all challenges
-    function getChallenges() external view returns (Challenge[] memory);
+    function getChallenges(uint256 startIndex, uint256 count) external view returns (Challenge[] memory);
+
+    /// @notice Get the number of challenges
+    function getChallengesCount() external view returns (uint256);
+
+    /// @notice Get the challenges for which the user is the admin
+    function getAdminChallenges(address admin) external view returns (uint256[] memory);
 
     /// @notice User calls this function to create a submission
-    function createSubmission(uint256 challengeId, string calldata submissionURI) external;
+    function createSubmission(uint256 challengeId, string calldata contact, string calldata submissionURI) external;
 
     /// @notice Read submission instance
     function getSubmission(uint256 challengeId, uint256 submissionId) external view returns (Submission memory);
 
     /// @notice Read all submissions for a challenge
-    function getSubmissions(uint256 challengeId) external view returns (Submission[] memory);
+    function getSubmissions(uint256 challengeId, uint256 startIndex, uint256 count) external view returns (Submission[] memory);
+
+    /// @notice Get the number of submissions for a challenge
+    function getSubmissionsCount(uint256 challengeId) external view returns (uint256);
 
     /// @notice Owner calls this function to resolve a challenge
     function resolveChallenge(
@@ -39,7 +48,7 @@ interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
     ) external;
 
     /// @notice User calls to withdraw funds from the escrow
-    function withdrawFunds(uint256 amount) external;
+    function withdraw(uint256 amount, address to) external;
 
     /// @notice Read the balance of an account
     function getBalance(address account) external view returns (uint256);

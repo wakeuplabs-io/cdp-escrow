@@ -5,21 +5,21 @@ import { CDPReactProvider, type AppConfig } from "@coinbase/cdp-react/components
 import { type Theme } from "@coinbase/cdp-react/theme";
 
 export const theme: Partial<Theme> = {
-  "colors-bg-default": "var(--cdp-example-card-bg-color)",
-  "colors-bg-overlay": "var(--cdp-example-bg-overlay-color)",
-  "colors-bg-skeleton": "var(--cdp-example-bg-skeleton-color)",
-  "colors-bg-primary": "var(--cdp-example-accent-color)",
-  "colors-bg-secondary": "var(--cdp-example-bg-low-contrast-color)",
-  "colors-fg-default": "var(--cdp-example-text-color)",
-  "colors-fg-muted": "var(--cdp-example-text-secondary-color)",
-  "colors-fg-primary": "var(--cdp-example-accent-color)",
-  "colors-fg-onPrimary": "var(--cdp-example-accent-foreground-color)",
-  "colors-fg-onSecondary": "var(--cdp-example-text-color)",
-  "colors-line-default": "var(--cdp-example-card-border-color)",
-  "colors-line-heavy": "var(--cdp-example-text-secondary-color)",
-  "colors-line-primary": "var(--cdp-example-accent-color)",
-  "font-family-sans": "var(--cdp-example-font-family)",
-  "font-size-base": "var(--cdp-example-base-font-size)",
+  "colors-bg-default": "var(--color-background)",
+  "colors-bg-overlay": "var(--color-background)",
+  "colors-bg-skeleton": "var(--color-background)",
+  "colors-bg-primary": "var(--color-primary)",
+  "colors-bg-secondary": "var(--color-secondary)",
+  "colors-fg-default": "var(--color-foreground)",
+  "colors-fg-muted": "var(--color-muted-foreground)",
+  "colors-fg-primary": "var(--color-primary)",
+  "colors-fg-onPrimary": "var(--color-primary-foreground)",
+  "colors-fg-onSecondary": "var(--color-secondary-foreground)",
+  "colors-line-default": "var(--color-border)",
+  "colors-line-heavy": "var(--color-muted-foreground)",
+  "colors-line-primary": "var(--color-primary)",
+  "font-family-sans": "var(--font-sans)",
+  "font-size-base": "var(--font-size-base)",
 };
 
 interface ProvidersProps {
@@ -32,8 +32,8 @@ const CDP_CONFIG: Config = {
 };
 
 const APP_CONFIG: AppConfig = {
-  name: "CDP Next.js StarterKit",
-  logoUrl: "http://localhost:3000/logo.svg",
+  name: "CDP Example 2",
+  logoUrl: "http://localhost:3000/icon.svg",
   authMethods: ["email", "sms"],
 };
 

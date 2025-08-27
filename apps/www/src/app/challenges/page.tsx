@@ -40,15 +40,29 @@ export default function ChallengesPage() {
   return (
     <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <div className="flex items-center gap-4 w-full">
+        <Link href="/challenges" className="flex items-center gap-4 w-full">
           <AudioWaveformIcon className="w-4 h-4" />
           <h1 className="text-xl font-bold">Acme Challenges</h1>
-        </div>
+        </Link>
 
         <AccountManager />
       </div>
 
-      <div className="p-6 flex items-center justify-end">
+      <div className="p-6 flex items-center justify-between">
+        <div className="relative">
+          <label htmlFor="filter" className="text-sm text-muted-foreground absolute left-5 top-0 bg-background -translate-y-1/2 px-1">
+            Admined by
+          </label>
+
+          <select
+            id="filter"
+            className="rounded-full outline-none border min-w-[150px] h-[46px] px-5 shrink-0 appearance-none"
+          >
+            <option value="all">All</option>
+            <option value="mine">Me</option>
+          </select>
+        </div>
+
         <Link
           href="/challenges/create"
           className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center"
@@ -79,7 +93,7 @@ export default function ChallengesPage() {
               ? "Loading more..."
               : hasNextPage
               ? "Load more"
-              : "No more items"}
+              : "No more challenges"}
           </div>
         </div>
       </div>
