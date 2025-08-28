@@ -9,6 +9,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev These structs organize challenge and submission data in a standardized format
  */
 interface IEscrowStructs {
+    enum ChallengeStatus {
+        Active,
+        Completed
+    }
+
     /**
      * @notice Challenge data structure containing all information about a challenge
      * @param uri URI pointing to off-chain metadata (description, requirements, submission guidelines, etc.)
@@ -17,11 +22,19 @@ interface IEscrowStructs {
      * @param createdAt Unix timestamp when the challenge was created
      */
     struct Challenge {
-        string uri;
+        string metadataUri;
         address admin;
         uint256 poolSize;
         uint256 endsAt;
         uint256 createdAt;
+        ChallengeStatus status;
+    }
+
+    enum SubmissionStatus {
+        Pending,
+        Ineligible,
+        Accepted,
+        Awarded
     }
 
     /**
@@ -32,9 +45,10 @@ interface IEscrowStructs {
      * @param createdAt Unix timestamp when the submission was created
      */
     struct Submission {
-        string uri;
-        string contact;
-        address submitter;
+        string metadataUri;
+        address creator;
+        string creatorContact;
+        SubmissionStatus status;
         uint256 createdAt;
     }
 }

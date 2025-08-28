@@ -1,10 +1,12 @@
-import { configByNetwork, ipfsClient } from "../../../config.js";
+import "dotenv/config";
+import { configByNetwork, ipfsClient } from "../../config.js";
 import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { formatEther } from "viem";
 
-export const findChallengeByIdCommand = new Command("find-challenge")
-  .description("Get a challenge by ID")
-  .option("--challenge-id <string>", "The challenge ID")
+export const balanceCommand = new Command("balance")
+  .description("Get balance")
+  .option("--address <address>", "The address to get balance for")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
@@ -18,9 +20,7 @@ export const findChallengeByIdCommand = new Command("find-challenge")
       ipfsClient
     );
 
-    // get challenge
-    const challenge = await escrowService.getChallengeById(
-      Number(options.challengeId)
-    );
-    console.log(challenge);
+    console.log(`⚡ Getting balance...`);
+    const balance = await escrowService.getBalance(options.address);
+    console.log("🎉 Balance:", formatEther(balance));
   });

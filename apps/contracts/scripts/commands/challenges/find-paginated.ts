@@ -2,9 +2,10 @@ import { configByNetwork, ipfsClient } from "../../../config.js";
 import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow.js";
 
-export const findChallengeByIdCommand = new Command("find-challenge")
-  .description("Get a challenge by ID")
-  .option("--challenge-id <string>", "The challenge ID")
+export const findChallengesCommand = new Command("find-challenges")
+  .description("Get all challenges")
+  .option("--start-index <number>", "The start index", "0")
+  .option("--count <number>", "The number of challenges", "10")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
@@ -18,9 +19,10 @@ export const findChallengeByIdCommand = new Command("find-challenge")
       ipfsClient
     );
 
-    // get challenge
-    const challenge = await escrowService.getChallengeById(
-      Number(options.challengeId)
+    // get challenges
+    const challenges = await escrowService.getChallengesPaginated(
+      Number(options.startIndex),
+      Number(options.count)
     );
-    console.log(challenge);
+    console.log(challenges);
   });

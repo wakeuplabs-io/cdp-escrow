@@ -1,6 +1,6 @@
-import { configByNetwork, publicClientByNetwork } from "../../../config.js";
-import { escrowAbi } from "../../abis/escrow.js";
+import { configByNetwork, ipfsClient } from "../../../config.js";
 import { Command } from "commander";
+import { EscrowService } from "@cdp/common/src/services/escrow.js";
 
 export const getSubmissionByIdCommand = new Command("find-submission")
   .description("Get a submission by ID")
@@ -9,16 +9,21 @@ export const getSubmissionByIdCommand = new Command("find-submission")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
-    const publicClient = publicClientByNetwork[network];
-    const challengeId = options.challengeId;
-    const submissionId = options.submissionId;
+    const config = configByNetwork[network];
 
-    const submission = await publicClient.readContract({
-      address: configByNetwork[network].escrowAddress,
-      abi: escrowAbi,
-      functionName: "getSubmission",
-      args: [BigInt(challengeId), BigInt(submissionId)],
-    });
+    // instantiate services
+    const escrowService = new EscrowService(
+      config.escrowAddress,
+      config.erc20Address,
+      config.rpcUrl,
+      ipfsClient
+    );
+
+    // get submission
+    const submission = await escrowService.getSubmissionById(
+      BigInt(options.challengeId),
+      BigInt(options.submissionId)
+    );
 
     console.log(submission);
   });

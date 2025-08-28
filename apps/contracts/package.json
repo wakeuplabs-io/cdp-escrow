@@ -1,5 +1,5 @@
 {
-  "name": "contracts",
+  "name": "@cdp/contracts",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
+    "@cdp/common": "workspace:*",
     "commander": "^14.0.0",
     "dotenv": "^17.2.1",
     "pinata": "^2.5.0"

@@ -43,8 +43,8 @@ interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
     /// @notice Owner calls this function to resolve a challenge
     function resolveChallenge(
         uint256 challengeId,
-        address[] calldata winners,
-        uint256[] calldata invalidSubmissions
+        uint256[] calldata awardedSubmissions,
+        uint256[] calldata ineligibleSubmissions
     ) external;
 
     /// @notice User calls to withdraw funds from the escrow

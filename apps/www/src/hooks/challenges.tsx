@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { QueryKeyFactory } from "@/lib/queries";
 import { Challenge } from "@/types/challenges";
+import { escrowContract } from "@/lib/services/escrow";
 
 const mockChallenge: Challenge = {
   id: 1,
@@ -158,6 +159,8 @@ export const useChallenges = () => {
   return useInfiniteQuery({
     queryKey: QueryKeyFactory.challenges(),
     queryFn: async ({ pageParam }) => {
+      const count = await escrowContract.getChallengesCount();
+
       return {
         challenges: [mockChallenge],
         hasNextPage: false,

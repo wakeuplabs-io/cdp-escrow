@@ -156,13 +156,13 @@ export const escrowAbi =  [
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "submissionId",
+        "name": "challengeId",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "challengeId",
+        "name": "submissionId",
         "type": "uint256"
       },
       {
@@ -230,7 +230,7 @@ export const escrowAbi =  [
     "outputs": [
       {
         "internalType": "string",
-        "name": "uri",
+        "name": "metadataUri",
         "type": "string"
       },
       {
@@ -252,6 +252,11 @@ export const escrowAbi =  [
         "internalType": "uint256",
         "name": "createdAt",
         "type": "uint256"
+      },
+      {
+        "internalType": "enum IEscrowStructs.ChallengeStatus",
+        "name": "status",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -368,7 +373,7 @@ export const escrowAbi =  [
         "components": [
           {
             "internalType": "string",
-            "name": "uri",
+            "name": "metadataUri",
             "type": "string"
           },
           {
@@ -390,6 +395,11 @@ export const escrowAbi =  [
             "internalType": "uint256",
             "name": "createdAt",
             "type": "uint256"
+          },
+          {
+            "internalType": "enum IEscrowStructs.ChallengeStatus",
+            "name": "status",
+            "type": "uint8"
           }
         ],
         "internalType": "struct IEscrowStructs.Challenge",
@@ -419,7 +429,7 @@ export const escrowAbi =  [
         "components": [
           {
             "internalType": "string",
-            "name": "uri",
+            "name": "metadataUri",
             "type": "string"
           },
           {
@@ -441,6 +451,11 @@ export const escrowAbi =  [
             "internalType": "uint256",
             "name": "createdAt",
             "type": "uint256"
+          },
+          {
+            "internalType": "enum IEscrowStructs.ChallengeStatus",
+            "name": "status",
+            "type": "uint8"
           }
         ],
         "internalType": "struct IEscrowStructs.Challenge[]",
@@ -483,18 +498,23 @@ export const escrowAbi =  [
         "components": [
           {
             "internalType": "string",
-            "name": "uri",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "contact",
+            "name": "metadataUri",
             "type": "string"
           },
           {
             "internalType": "address",
-            "name": "submitter",
+            "name": "creator",
             "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "creatorContact",
+            "type": "string"
+          },
+          {
+            "internalType": "enum IEscrowStructs.SubmissionStatus",
+            "name": "status",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -534,18 +554,23 @@ export const escrowAbi =  [
         "components": [
           {
             "internalType": "string",
-            "name": "uri",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "contact",
+            "name": "metadataUri",
             "type": "string"
           },
           {
             "internalType": "address",
-            "name": "submitter",
+            "name": "creator",
             "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "creatorContact",
+            "type": "string"
+          },
+          {
+            "internalType": "enum IEscrowStructs.SubmissionStatus",
+            "name": "status",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -588,13 +613,13 @@ export const escrowAbi =  [
         "type": "uint256"
       },
       {
-        "internalType": "address[]",
-        "name": "winners",
-        "type": "address[]"
+        "internalType": "uint256[]",
+        "name": "awardedSubmissions",
+        "type": "uint256[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "invalidSubmissions",
+        "name": "ineligibleSubmissions",
         "type": "uint256[]"
       }
     ],
@@ -620,18 +645,23 @@ export const escrowAbi =  [
     "outputs": [
       {
         "internalType": "string",
-        "name": "uri",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "contact",
+        "name": "metadataUri",
         "type": "string"
       },
       {
         "internalType": "address",
-        "name": "submitter",
+        "name": "creator",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "creatorContact",
+        "type": "string"
+      },
+      {
+        "internalType": "enum IEscrowStructs.SubmissionStatus",
+        "name": "status",
+        "type": "uint8"
       },
       {
         "internalType": "uint256",

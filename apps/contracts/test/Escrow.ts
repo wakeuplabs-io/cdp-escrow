@@ -12,8 +12,6 @@ describe("Escrow Contract Tests", async function () {
 
   describe("Deployment", () => {
     it("Should deploy with correct initial values", async () => {
-      const [owner] = await viem.getWalletClients();
-      
       // Deploy mock ERC20 token
       const mockToken = await viem.deployContract("MockERC20", [
         "Test Token",
@@ -54,7 +52,7 @@ describe("Escrow Contract Tests", async function () {
       const challenge = await escrow.read.getChallenge([0n]);
       assert.equal(challenge.poolSize, POOL_SIZE);
       assert.equal(challenge.endsAt, BigInt(CHALLENGE_DEADLINE));
-      assert.equal(challenge.uri, metadataURI);
+      assert.equal(challenge.metadataUri, metadataURI);
     });
 
     it("Should not allow non-owner to create challenges", async () => {
@@ -107,6 +105,24 @@ describe("Escrow Contract Tests", async function () {
       assert.equal(challenge2.poolSize, parseEther("75"));
     });
 
+    it("Should set challenge status to Active when created", async () => {
+      const [owner] = await viem.getWalletClients();
+      
+      const mockToken = await viem.deployContract("MockERC20", [
+        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
+      ]);
+      const escrow = await viem.deployContract("Escrow", [
+        mockToken.address
+      ]);
+
+      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
+        account: owner.account
+      });
+
+      const challenge = await escrow.read.getChallenge([0n]);
+      assert.equal(challenge.status, 0); // ChallengeStatus.Active = 0
+    });
+
     it("Should return all challenges via getChallenges", async () => {
       const [owner] = await viem.getWalletClients();
       
@@ -154,8 +170,9 @@ describe("Escrow Contract Tests", async function () {
       });
 
       const submission = await escrow.read.getSubmission([0n, 0n]);
-      assert.equal(submission.submitter, getAddress(user1.account.address));
-      assert.equal(submission.uri, submissionURI);
+      assert.equal(submission.creator, getAddress(user1.account.address));
+      assert.equal(submission.metadataUri, submissionURI);
+      assert.equal(submission.status, 0); // SubmissionStatus.Pending = 0
     });
 
     it("Should emit SubmissionCreated event", async () => {
@@ -178,7 +195,7 @@ describe("Escrow Contract Tests", async function () {
         }),
         escrow,
         "SubmissionCreated",
-        [1n, 0n, getAddress(user1.account.address)]
+        [0n, 0n, getAddress(user1.account.address)]
       );
     });
 
@@ -228,8 +245,8 @@ describe("Escrow Contract Tests", async function () {
       const submission1 = await escrow.read.getSubmission([0n, 0n]);
       const submission2 = await escrow.read.getSubmission([0n, 1n]);
       
-      assert.equal(submission1.submitter, getAddress(user1.account.address));
-      assert.equal(submission2.submitter, getAddress(user2.account.address));
+      assert.equal(submission1.creator, getAddress(user1.account.address));
+      assert.equal(submission2.creator, getAddress(user2.account.address));
     });
 
     it("Should return all submissions via getSubmissions", async () => {
@@ -251,8 +268,8 @@ describe("Escrow Contract Tests", async function () {
 
       const submissions = await escrow.read.getSubmissions([0n, 0n, 2n]);
       assert.equal(submissions.length, 2);
-      assert.equal(submissions[0].submitter, getAddress(user1.account.address));
-      assert.equal(submissions[1].submitter, getAddress(user2.account.address));
+      assert.equal(submissions[0].creator, getAddress(user1.account.address));
+      assert.equal(submissions[1].creator, getAddress(user2.account.address));
     });
   });
 
@@ -281,8 +298,8 @@ describe("Escrow Contract Tests", async function () {
       await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
       await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
 
-      // Resolve with user1 as winner
-      await escrow.write.resolveChallenge([0n, [user1.account.address], []], {
+      // Resolve with submission 0 as winner (user1's submission)
+      await escrow.write.resolveChallenge([0n, [0n], []], {
         account: owner.account
       });
 
@@ -296,6 +313,60 @@ describe("Escrow Contract Tests", async function () {
       const loserShare = (POOL_SIZE * 30n) / 100n / 2n; // Split between 2 losers
       assert.equal(user2Balance, loserShare);
       assert.equal(user3Balance, loserShare);
+    });
+
+    it("Should update challenge and submission statuses when resolved", async () => {
+      const [owner, , user1, user2, user3] = await viem.getWalletClients();
+      
+      const mockToken = await viem.deployContract("MockERC20", [
+        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
+      ]);
+      const escrow = await viem.deployContract("Escrow", [
+        mockToken.address
+      ]);
+
+      // Transfer tokens to escrow to simulate having a pool to distribute
+      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
+
+      // Create challenge with deadline in the past
+      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
+      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
+        account: owner.account
+      });
+
+      // Create submissions
+      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
+      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
+      await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
+
+      // Verify initial statuses
+      let challenge = await escrow.read.getChallenge([0n]);
+      assert.equal(challenge.status, 0); // ChallengeStatus.Active = 0
+
+      let submission1 = await escrow.read.getSubmission([0n, 0n]);
+      let submission2 = await escrow.read.getSubmission([0n, 1n]);
+      let submission3 = await escrow.read.getSubmission([0n, 2n]);
+      
+      assert.equal(submission1.status, 0); // SubmissionStatus.Pending = 0
+      assert.equal(submission2.status, 0); // SubmissionStatus.Pending = 0
+      assert.equal(submission3.status, 0); // SubmissionStatus.Pending = 0
+
+      // Resolve with submission 0 as winner (user1's submission) and submission 1 as ineligible
+      await escrow.write.resolveChallenge([0n, [0n], [1n]], {
+        account: owner.account
+      });
+
+      // Verify updated statuses
+      challenge = await escrow.read.getChallenge([0n]);
+      assert.equal(challenge.status, 1); // ChallengeStatus.Completed = 1
+
+      submission1 = await escrow.read.getSubmission([0n, 0n]);
+      submission2 = await escrow.read.getSubmission([0n, 1n]);
+      submission3 = await escrow.read.getSubmission([0n, 2n]);
+      
+      assert.equal(submission1.status, 3); // SubmissionStatus.Awarded = 3 (winner)
+      assert.equal(submission2.status, 1); // SubmissionStatus.Ineligible = 1 (invalid)
+      assert.equal(submission3.status, 2); // SubmissionStatus.Accepted = 2 (loser)
     });
 
     it("Should not allow resolving challenge before deadline", async () => {
@@ -316,7 +387,7 @@ describe("Escrow Contract Tests", async function () {
       await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
 
       await assert.rejects(
-        escrow.write.resolveChallenge([0n, [user1.account.address], []], {
+        escrow.write.resolveChallenge([0n, [0n], []], {
           account: owner.account
         }),
         /ChallengeNotClosed/
@@ -341,7 +412,7 @@ describe("Escrow Contract Tests", async function () {
       await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
 
       await assert.rejects(
-        escrow.write.resolveChallenge([0n, [user1.account.address], []], {
+        escrow.write.resolveChallenge([0n, [0n], []], {
           account: user1.account
         }),
         /OnlyAdmin/
@@ -372,8 +443,8 @@ describe("Escrow Contract Tests", async function () {
       await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
       await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
 
-      // Resolve with user1 as winner and user2, user3 as invalid (submissions 1 and 2)
-      await escrow.write.resolveChallenge([0n, [user1.account.address], [1n, 2n]], {
+      // Resolve with submission 0 as winner (user1's submission) and submissions 1, 2 as ineligible
+      await escrow.write.resolveChallenge([0n, [0n], [1n, 2n]], {
         account: owner.account
       });
 
@@ -411,7 +482,7 @@ describe("Escrow Contract Tests", async function () {
       
       await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
       
-      await escrow.write.resolveChallenge([0n, [user1.account.address], []], {
+      await escrow.write.resolveChallenge([0n, [0n], []], {
         account: owner.account
       });
 
@@ -419,12 +490,12 @@ describe("Escrow Contract Tests", async function () {
       const escrowBalance = await escrow.read.getBalance([user1.account.address]);
 
       await viem.assertions.emitWithArgs(
-        escrow.write.withdrawFunds([escrowBalance], {
+        escrow.write.withdraw([escrowBalance, user1.account.address], {
           account: user1.account
         }),
         escrow,
         "FundsWithdrawn",
-        [getAddress(user1.account.address), escrowBalance]
+        [getAddress(user1.account.address), getAddress(user1.account.address), escrowBalance]
       );
 
       const finalTokenBalance = await mockToken.read.balanceOf([user1.account.address]);
@@ -445,7 +516,7 @@ describe("Escrow Contract Tests", async function () {
       ]);
 
       await assert.rejects(
-        escrow.write.withdrawFunds([parseEther("100")], {
+        escrow.write.withdraw([parseEther("100"), user1.account.address], {
           account: user1.account
         }),
         /InsufficientBalance/
@@ -478,7 +549,7 @@ describe("Escrow Contract Tests", async function () {
       
       await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
       
-      await escrow.write.resolveChallenge([0n, [user1.account.address], []], {
+      await escrow.write.resolveChallenge([0n, [0n], []], {
         account: owner.account
       });
 

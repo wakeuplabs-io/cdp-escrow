@@ -1,0 +1,18 @@
+{
+  "name": "@cdp/common",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "description": "",
+  "dependencies": {
+    "@types/node": "^24.3.0",
+    "pinata": "^2.5.0",
+    "viem": "^2.36.0"
+  }
+}

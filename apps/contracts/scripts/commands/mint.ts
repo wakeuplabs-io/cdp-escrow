@@ -1,12 +1,9 @@
 import "dotenv/config";
-import { parseEther, getAddress } from "viem";
-import {
-  configByNetwork,
-  publicClientByNetwork,
-  walletClientByNetwork,
-} from "../../config.js";
-import { erc20Abi } from "../abis/erc20.js";
+import { parseEther } from "viem";
+import { configByNetwork, walletClientByNetwork } from "../../config.js";
 import { Command } from "commander";
+import { Erc20Service } from "@cdp/common/src/services/erc20.js";
+import { privateKeyToAccount } from "viem/accounts";
 
 export const mintCommand = new Command("mint")
   .description("Mint tokens")
@@ -15,19 +12,25 @@ export const mintCommand = new Command("mint")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
-    const publicClient = publicClientByNetwork[network];
+    const config = configByNetwork[network];
     const walletClient = walletClientByNetwork[network];
 
+    // instantiate services
+    const erc20Service = new Erc20Service(
+      config.erc20Address,
+      config.rpcUrl
+    );
+
     console.log(`⚡ Minting ${options.amount} wei tokens to ${options.to}...`);
-    const mintTx = await walletClient.writeContract({
-      address: configByNetwork[network].erc20Address,
-      abi: erc20Abi,
-      functionName: "mint",
-      args: [getAddress(options.to), parseEther(options.amount)],
+    const mintTx = await erc20Service.prepareMint(
+      parseEther(options.amount),
+      options.to
+    );
+    const mintTxHash = await walletClient.sendTransaction({
+      ...mintTx,
+      account: privateKeyToAccount(config.privateKey),
+      chain: config.chain,
     });
-
-    console.log("📝 Transaction hash:", mintTx);
-    await publicClient.waitForTransactionReceipt({ hash: mintTx });
-
     console.log("🎉 Minting completed successfully!");
+    console.log("📝 Transaction hash:", mintTxHash);
   });

@@ -43,12 +43,15 @@ contract Escrow is IEscrow {
         uint256 deadline
     ) public {
         challenges[challengesCount] = Challenge({
-            uri: metadataURI,
+            metadataUri: metadataURI,
             poolSize: poolSize,
             endsAt: deadline,
             createdAt: block.timestamp,
+            status: ChallengeStatus.Active,
             admin: msg.sender
         });
+        
+        adminChallenges[msg.sender].push(challengesCount);
         
         emit ChallengeCreated(challengesCount, metadataURI, poolSize, deadline);
         challengesCount++;
@@ -91,9 +94,10 @@ contract Escrow is IEscrow {
         uint256 submissionId = submissionsCount[challengeId];
 
         submissions[challengeId][submissionId] = Submission({
-            uri: submissionURI,
-            contact: contact,
-            submitter: msg.sender,
+            creator: msg.sender,
+            creatorContact: contact,
+            metadataUri: submissionURI,
+            status: SubmissionStatus.Pending,
             createdAt: block.timestamp
         });
         submissionsCount[challengeId]++;
@@ -130,47 +134,62 @@ contract Escrow is IEscrow {
     /// @inheritdoc IEscrow
     function resolveChallenge(
         uint256 challengeId,
-        address[] calldata winners,
-        uint256[] calldata invalidSubmissions
+        uint256[] calldata awardedSubmissions,
+        uint256[] calldata ineligibleSubmissions
     ) public onlyAdmin(challengeId) {
         if (challenges[challengeId].endsAt > block.timestamp) {
             revert ChallengeNotClosed();
         }
 
-        // filter out winners and invalid submissions to get the rest (losers)
-        address[] memory losers = new address[](submissionsCount[challengeId] - winners.length - invalidSubmissions.length);
-        uint256 loserIndex = 0;
+        // Update challenge status to completed
+        challenges[challengeId].status = ChallengeStatus.Completed;
+
+        // Mark awarded submissions as Awarded and collect winner addresses
+        address[] memory winners = new address[](awardedSubmissions.length);
+        for (uint256 j = 0; j < awardedSubmissions.length; j++) {
+            submissions[challengeId][awardedSubmissions[j]].status = SubmissionStatus.Awarded;
+            winners[j] = submissions[challengeId][awardedSubmissions[j]].creator;
+        }
+
+        // Mark ineligible submissions as Ineligible
+        for (uint256 j = 0; j < ineligibleSubmissions.length; j++) {
+            submissions[challengeId][ineligibleSubmissions[j]].status = SubmissionStatus.Ineligible;
+        }
+
+        // Filter out awarded and ineligible submissions to get the rest (losers)
+        address[] memory accepted = new address[](submissionsCount[challengeId] - awardedSubmissions.length - ineligibleSubmissions.length);
+        uint256 acceptedIndex = 0;
         for (uint256 i = 0; i < submissionsCount[challengeId]; i++) {
-            address submitter = submissions[challengeId][i].submitter;
-            bool isWinner = false;
-            bool isInvalid = false;
+            bool isAwarded = false;
+            bool isIneligible = false;
             
-            // Check if submitter is a winner
-            for (uint256 j = 0; j < winners.length; j++) {
-                if (submitter == winners[j]) {
-                    isWinner = true;
+            // Check if submission is awarded
+            for (uint256 j = 0; j < awardedSubmissions.length; j++) {
+                if (i == awardedSubmissions[j]) {
+                    isAwarded = true;
                     break;
                 }
             }
             
-            // Check if submission is invalid
-            for (uint256 j = 0; j < invalidSubmissions.length; j++) {
-                if (i == invalidSubmissions[j]) {
-                    isInvalid = true;
+            // Check if submission is ineligible
+            for (uint256 j = 0; j < ineligibleSubmissions.length; j++) {
+                if (i == ineligibleSubmissions[j]) {
+                    isIneligible = true;
                     break;
                 }
             }
             
-            // If not winner and not invalid, add to losers
-            if (!isWinner && !isInvalid) {
-                losers[loserIndex] = submitter;
-                loserIndex++;
+            // If not awarded and not ineligible, add to losers and mark as Accepted
+            if (!isAwarded && !isIneligible) {
+                accepted[acceptedIndex] = submissions[challengeId][i].creator;
+                acceptedIndex++;
+                submissions[challengeId][i].status = SubmissionStatus.Accepted;
             }
         }
 
         // Reward distribution: Winners get 70% if there are losers, otherwise 100%
         uint256 totalPool = challenges[challengeId].poolSize;
-        if (losers.length > 0) {
+        if (accepted.length > 0) {
             // Winners get 70%, losers get 30%
             uint256 winnerPoolSize = (totalPool * 70) / 100;
             uint256 loserPoolSize = totalPool - winnerPoolSize;
@@ -182,9 +201,9 @@ contract Escrow is IEscrow {
             }
             
             // Distribute to losers
-            uint256 loserReward = loserPoolSize / losers.length;
-            for (uint256 i = 0; i < losers.length; i++) {
-                balances[losers[i]] += loserReward;
+            uint256 loserReward = loserPoolSize / accepted.length;
+            for (uint256 i = 0; i < accepted.length; i++) {
+                balances[accepted[i]] += loserReward;
             }
         } else {
             // Winners take 100% of the pool
