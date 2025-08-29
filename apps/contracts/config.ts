@@ -26,16 +26,16 @@ export const configByNetwork: Record<
   "base-mainnet": {
     chain: base,
     rpcUrl: process.env.BASE_RPC_URL || "https://mainnet.base.org",
-    privateKey: (process.env.BASE_PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001") as `0x${string}`,
-    escrowAddress: (process.env.BASE_ESCROW_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
-    erc20Address: (process.env.BASE_ERC20_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+    privateKey: process.env.BASE_PRIVATE_KEY as `0x${string}`,
+    escrowAddress: process.env.BASE_ESCROW_ADDRESS as `0x${string}`,
+    erc20Address: process.env.BASE_ERC20_ADDRESS as `0x${string}`,
   },
   "base-sepolia": {
     chain: baseSepolia,
     rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
-    privateKey: (process.env.BASE_SEPOLIA_PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001") as `0x${string}`,
-    escrowAddress: (process.env.BASE_SEPOLIA_ESCROW_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
-    erc20Address: (process.env.BASE_SEPOLIA_ERC20_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+    privateKey: process.env.BASE_SEPOLIA_PRIVATE_KEY as `0x${string}`,
+    escrowAddress: process.env.BASE_SEPOLIA_ESCROW_ADDRESS as `0x${string}`,
+    erc20Address: process.env.BASE_SEPOLIA_ERC20_ADDRESS as `0x${string}`,
   },
 };
 
@@ -64,6 +64,6 @@ export const walletClientByNetwork: Record<Network, WalletClient> = {
 };
 
 export const ipfsClient = new PinataIpfs(
-  process.env.PINATA_JWT || "dummy-jwt-for-testing",
-  process.env.PINATA_GATEWAY || "https://dummy-gateway.pinata.cloud"
+  process.env.PINATA_JWT as string,
+  process.env.PINATA_GATEWAY as string
 );

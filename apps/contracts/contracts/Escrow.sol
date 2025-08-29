@@ -67,7 +67,6 @@ contract Escrow is IEscrow {
         token.transferFrom(msg.sender, address(this), poolSize);
 
         emit ChallengeCreated(challengeId, metadataURI, poolSize, deadline);
-        
     }
 
     /// @inheritdoc IEscrow

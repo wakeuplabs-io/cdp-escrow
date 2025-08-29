@@ -1,6 +1,6 @@
-import { configByNetwork, ipfsClient } from "../../../config";
-import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow";
+import { Command } from "commander";
+import { configByNetwork, ipfsClient } from "../../../config";
 
 export const getSubmissionsPaginatedCommand = new Command("find-submissions")
   .description("Get submissions paginated")
@@ -14,12 +14,13 @@ export const getSubmissionsPaginatedCommand = new Command("find-submissions")
     
     // instantiate services
     const escrowService = new EscrowService(
+      ipfsClient,
+      config.chain.contracts?.multicall3?.address as `0x${string}`,
       config.escrowAddress,
       config.erc20Address,
-      config.rpcUrl,
-      ipfsClient
+      config.rpcUrl
     );
-
+    
     // get submissions
     const submissions = await escrowService.getSubmissionsPaginated(
       BigInt(options.challengeId),

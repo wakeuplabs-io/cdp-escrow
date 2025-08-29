@@ -21,6 +21,12 @@ export const submissionSchema = z.object({
   metadata: submissionMetadataSchema
 });
 
+export const userSubmissionSchema = z.object({
+  submissionId: z.number(),
+  challengeId: z.number(),
+});
+
 export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 export type SubmissionMetadata = z.infer<typeof submissionMetadataSchema>;
 export type Submission = z.infer<typeof submissionSchema>;
+export type UserSubmission = z.infer<typeof userSubmissionSchema>;

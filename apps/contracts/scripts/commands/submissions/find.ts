@@ -1,6 +1,6 @@
-import { configByNetwork, ipfsClient } from "../../../config";
-import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow";
+import { Command } from "commander";
+import { configByNetwork, ipfsClient } from "../../../config";
 
 export const getSubmissionByIdCommand = new Command("find-submission")
   .description("Get a submission by ID")
@@ -13,10 +13,11 @@ export const getSubmissionByIdCommand = new Command("find-submission")
 
     // instantiate services
     const escrowService = new EscrowService(
+      ipfsClient,
+      config.chain.contracts?.multicall3?.address as `0x${string}`,
       config.escrowAddress,
       config.erc20Address,
-      config.rpcUrl,
-      ipfsClient
+      config.rpcUrl
     );
 
     // get submission

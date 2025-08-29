@@ -1,8 +1,8 @@
-import "dotenv/config";
-import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config";
-import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow";
+import { Command } from "commander";
+import "dotenv/config";
 import { privateKeyToAccount } from "viem/accounts";
+import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config";
 
 export const createSubmissionCommand = new Command("create-submission")
   .description("Create a submission")
@@ -17,10 +17,11 @@ export const createSubmissionCommand = new Command("create-submission")
 
     // instantiate services
     const escrowService = new EscrowService(
+      ipfsClient,
+      config.chain.contracts?.multicall3?.address as `0x${string}`,
       config.escrowAddress,
       config.erc20Address,
-      config.rpcUrl,
-      ipfsClient
+      config.rpcUrl
     );
 
     // Create submission

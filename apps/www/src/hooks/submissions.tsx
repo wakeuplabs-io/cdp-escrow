@@ -59,11 +59,11 @@ export const useSubmissionCount = (challengeId: number) => {
   });
 };
 
-export const useHasSubmission = (challengeId: number, user: Address | null) => {
+export const useUserSubmissions = (challengeId: number, user: Address | null) => {
   return useQuery({
-    queryKey: QueryKeyFactory.hasSubmission(challengeId, user as Address),
+    queryKey: QueryKeyFactory.userSubmissions(challengeId, user as Address),
     queryFn: () =>
-      escrowService.hasSubmission(BigInt(challengeId), user as Address),
+      escrowService.getUserSubmissions(user as Address),
     enabled: !!user,
   });
 };

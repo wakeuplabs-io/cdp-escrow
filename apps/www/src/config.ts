@@ -11,10 +11,11 @@ export const ipfsClient = new PinataIpfs(
 );
 
 export const escrowService = new EscrowService(
+  ipfsClient,
+  process.env.NEXT_PUBLIC_MULTICALL_ADDRESS as Address,
   process.env.NEXT_PUBLIC_ESCROW_ADDRESS as Address,
   process.env.NEXT_PUBLIC_ERC20_ADDRESS as Address,
   process.env.NEXT_PUBLIC_RPC_URL as string,
-  ipfsClient
 );
 
 export const erc20Service = new Erc20Service(

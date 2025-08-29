@@ -1,7 +1,7 @@
-import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config";
-import { Command } from "commander";
 import { EscrowService } from "@cdp/common/src/services/escrow";
+import { Command } from "commander";
 import { privateKeyToAccount } from "viem/accounts";
+import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config";
 
 export const resolveChallengeCommand = new Command("resolve-challenge")
   .description("Resolve a challenge")
@@ -19,10 +19,11 @@ export const resolveChallengeCommand = new Command("resolve-challenge")
 
     // instantiate services
     const escrowService = new EscrowService(
+      ipfsClient,
+      config.chain.contracts?.multicall3?.address as `0x${string}`,
       config.escrowAddress,
       config.erc20Address,
-      config.rpcUrl,
-      ipfsClient
+      config.rpcUrl
     );
 
     // resolve challenge
@@ -30,7 +31,7 @@ export const resolveChallengeCommand = new Command("resolve-challenge")
       {
         challengeId: BigInt(options.challengeId),
         winners: options.winners.split(",").map(BigInt),
-        invalidSubmissions: options.ineligible.split(",").map(BigInt),
+        ineligible: options.ineligible.split(",").map(BigInt),
       }
     );
     const resolveTxHash = await walletClient.sendTransaction({

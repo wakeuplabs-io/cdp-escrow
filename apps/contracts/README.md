@@ -16,13 +16,13 @@ npm run deploy:base-sepolia
 tsx ./scripts/index.ts mint --network base-sepolia --to 0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0 --amount 100
 
 # create challenge
-tsx ./scripts/index.ts create-challenge --network base-sepolia --title "Names for my company" --description "We do seeds for space" --pool-size 100 --end-date '2025-08-29T23:50:00.000Z'
+tsx ./scripts/index.ts create-challenge --network base-sepolia --title "Names for my company" --description "We do seeds for space" --pool-size 100 --end-date '2025-08-30T23:50:00.000Z'
 
 # get challenge by id
 tsx ./scripts/index.ts find-challenge --network base-sepolia --challenge-id 0
 
 # get paginated challenges
-tsx ./scripts/index.ts find-challenges --network base-sepolia --start-index 1 --count 2
+tsx ./scripts/index.ts find-challenges --network base-sepolia --start-index 0 --count 2
 
 # resolve challenge
 tsx ./scripts/index.ts resolve-challenge --network base-sepolia --challenge-id 0 --winners 0,1 --invalid 2,3

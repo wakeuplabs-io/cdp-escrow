@@ -14,8 +14,8 @@ export const QueryKeyFactory = {
     submissionId,
   ],
   submissions: (challengeId: number) => ["submissions", challengeId],
-  hasSubmission: (challengeId: number, user: Address) => [
-    "has-submission",
+  userSubmissions: (challengeId: number, user: Address) => [
+    "user-submissions",
     challengeId,
     user,
   ],

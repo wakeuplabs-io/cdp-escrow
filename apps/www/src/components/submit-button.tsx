@@ -1,8 +1,9 @@
 "use client";
 
-import { useHasSubmission } from "@/hooks/submissions";
+  import { useUserSubmissions } from "@/hooks/submissions";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Tooltip } from "react-tooltip";
 import { Button } from "./ui/button";
 
@@ -11,7 +12,11 @@ export const SubmitButton: React.FC<{
 }> = ({ challengeId }) => {
   const router = useRouter();
   const { evmAddress } = useEvmAddress();
-  const { data: hasSubmission } = useHasSubmission(challengeId, evmAddress);
+  const { data: userSubmissions } = useUserSubmissions(challengeId, evmAddress);
+
+  const hasSubmission = useMemo(() => userSubmissions?.some(
+    (submission) => submission.challengeId === challengeId
+  ), [userSubmissions, challengeId]);
 
   return (
     <>
