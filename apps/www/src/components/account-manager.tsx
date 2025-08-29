@@ -25,6 +25,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "./ui/dialog";
+import { Input } from "./ui/input";
 
 enum Tab {
   Account = "account",
@@ -37,6 +38,7 @@ enum Tab {
 export const AccountManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState(Tab.Account);
+  const [onrampAmount, setOnrampAmount] = useState("");
 
   const { signOut } = useSignOut();
   const { isSignedIn } = useIsSignedIn();
@@ -166,7 +168,36 @@ export const AccountManager = () => {
       [Tab.Onramp]: {
         title: "Onramp USDC",
         description: "Onramp USDC to your wallet",
-        content: <></>,
+        content: (
+          <div className="flex flex-col gap-4">
+            <Input
+              placeholder="Amount"
+              value={onrampAmount}
+              onChange={e => setOnrampAmount(e.target.value)}
+            />
+
+            <Button
+              className="w-full"
+              onClick={async () => {
+                const { token } = await fetch("/api/session", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    addresses: [{ address: evmAddress, blockchains: ["base"] }],
+                    assets: ["USDC"],
+                  }),
+                }).then((res) => res.json());
+                // TODO: base url as env variable
+                window.open(
+                  `https://pay-sandbox.coinbase.com/buy?assets=USDC&defaultAsset=USDC&fiatCurrency=USD&presetCryptoAmount=${onrampAmount}&sessionToken=${token}`,
+                  "Onramp",
+                  "width=500,height=800,scrollbars=no,resizable=no"
+                );
+              }}
+            >
+              Onramp
+            </Button>
+          </div>
+        ),
       },
       [Tab.Receive]: {
         title: "Receive USDC",
@@ -196,7 +227,7 @@ export const AccountManager = () => {
         ),
       },
     } as const;
-  }, [balance, evmAddress]);
+  }, [balance, evmAddress, onrampAmount, setOnrampAmount]);
 
   return (
     <>
