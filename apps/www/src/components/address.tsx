@@ -1,6 +1,8 @@
+import { TOKEN_DECIMALS } from "@/config";
+import { useCopyToClipboard } from "@/hooks/copy";
 import { cn, shortenAddress } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
-import { useCopyToClipboard } from "@/hooks/copy";
+import { formatUnits } from "viem";
 
 export const Address = ({
   label,
@@ -11,7 +13,7 @@ export const Address = ({
 }: {
   label?: string;
   address: string;
-  balance?: number;
+  balance?: bigint;
   balanceLabel?: string;
   className?: string;
 }) => {
@@ -28,11 +30,11 @@ export const Address = ({
         {label ?? "Address"}
       </span>
       <div className="text-sm text-muted-foreground">
-        {shortenAddress(address ?? "")}
+        {shortenAddress(address)}
       </div>
       <button
         disabled={copied}
-        onClick={() => copyToClipboard(address ?? "")}
+        onClick={() => copyToClipboard(address)}
         className="text-muted-foreground"
       >
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -40,7 +42,7 @@ export const Address = ({
 
       {balance !== undefined && balanceLabel !== undefined && (
         <div className="text-xs text-muted-foreground absolute right-0 bottom-1 bg-muted rounded-md px-4 py-3">
-          {balance} {balanceLabel}
+          {formatUnits(balance, TOKEN_DECIMALS)} {balanceLabel}
         </div>
       )}
     </div>

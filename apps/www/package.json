@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cdp/common": "workspace:*",
     "@coinbase/cdp-core": "latest",
     "@coinbase/cdp-hooks": "latest",
     "@coinbase/cdp-react": "latest",

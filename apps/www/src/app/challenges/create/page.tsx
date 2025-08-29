@@ -15,16 +15,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip } from "react-tooltip";
-import { challengeMetadataSchema } from "@/types/challenges";
+import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
 import { useCreateChallenge } from "@/hooks/challenges";
 import { useRouter } from "next/navigation";
+import { parseEther } from "viem";
 
 export default function CreateChallengePage() {
-  const [body, setBody] = useState("");
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [preview, setPreview] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [deadline, setDeadline] = useState<Date>(new Date());
+  const [endsAt, setEndsAt] = useState<Date>(new Date());
   const [poolSize, setPoolSize] = useState("");
 
   const router = useRouter();
@@ -35,7 +36,12 @@ export default function CreateChallengePage() {
   const onCreateChallenge = useCallback(async () => {
     // submit is disabled if validation fails, so here we can assume it's valid
     try {
-      const challengeId = await createChallenge();
+      const challengeId = await createChallenge({
+        title,
+        description,
+        poolSize: parseEther(poolSize),
+        endDate: endsAt,
+      });
       router.push(`/challenges/${challengeId}`);
     } catch (error) {
       console.error(error);
@@ -43,13 +49,23 @@ export default function CreateChallengePage() {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [title, body, deadline, createChallenge, router]);
+  }, [title, description, endsAt, createChallenge, router]);
 
   const validation = useMemo(() => {
+    if (Number(poolSize) < 1) {
+      return {
+        isValid: false,
+        errors: ["Pool size must be greater than 1 USDC"],
+      };
+    }
+
+    if (endsAt < new Date()) {
+      return { isValid: false, errors: ["Deadline must be in the future"] };
+    }
+
     const result = challengeMetadataSchema.safeParse({
       title,
-      body,
-      deadline,
+      description,
     });
 
     if (result.success) {
@@ -58,7 +74,7 @@ export default function CreateChallengePage() {
 
     const errors = result.error.issues.map((issue) => issue.message);
     return { isValid: false, errors };
-  }, [title, body, deadline]);
+  }, [title, description, poolSize, endsAt]);
 
   const errorMessage = validation.errors[0];
 
@@ -125,7 +141,7 @@ export default function CreateChallengePage() {
                       Deadline date
                     </span>
                     <div className="flex items-center justify-between mt-4">
-                      {deadline ? deadline.toDateString() : "Select date"}
+                      {endsAt ? endsAt.toDateString() : "Select date"}
                       <ChevronDownIcon className="w-4 h-4" />
                     </div>
                   </button>
@@ -136,11 +152,11 @@ export default function CreateChallengePage() {
                 >
                   <Calendar
                     mode="single"
-                    selected={deadline}
+                    selected={endsAt}
                     captionLayout="dropdown"
                     onSelect={(date) => {
                       if (date) {
-                        setDeadline(date);
+                        setEndsAt(date);
                         setCalendarOpen(false);
                       }
                     }}
@@ -154,14 +170,14 @@ export default function CreateChallengePage() {
                 <input
                   type="time"
                   id="time-picker"
-                  value={deadline.toTimeString().slice(0, 5)}
+                  value={endsAt.toTimeString().slice(0, 5)}
                   onChange={(e) => {
                     const [hours, minutes] = e.target.value
                       .split(":")
                       .map(Number);
-                    const newDeadline = new Date(deadline);
+                    const newDeadline = new Date(endsAt);
                     newDeadline.setHours(hours, minutes, 0);
-                    setDeadline(newDeadline);
+                    setEndsAt(newDeadline);
                   }}
                   className="w-full outline-none mt-4 pr-4 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 />
@@ -171,7 +187,7 @@ export default function CreateChallengePage() {
 
           {/* Body input */}
           <div className="mb-6">
-            <div className="flex gap-2  mb-3 font-bold">
+            <div className="flex gap-2 mb-3 font-bold">
               <button
                 className={cn(
                   "uppercase text-sm",
@@ -193,13 +209,15 @@ export default function CreateChallengePage() {
             </div>
 
             {preview ? (
-              <div className="prose border rounded-lg p-4">
-                <Markdown>{body}</Markdown>
+              <div className="w-full border rounded-lg p-10">
+                <div className="prose">
+                  <Markdown>{description}</Markdown>
+                </div>
               </div>
             ) : (
               <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full h-full outline-none bg-muted p-4 rounded-lg"
                 placeholder="Write your markdown challenge here..."
                 rows={10}

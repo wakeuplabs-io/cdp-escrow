@@ -1,29 +1,30 @@
 "use client";
 
-import { useEvmAddress, useIsSignedIn, useSignOut } from "@coinbase/cdp-hooks";
+import { useBalance } from "@/hooks/balance";
 import { shortenAddress } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { useEvmAddress, useIsSignedIn, useSignOut } from "@coinbase/cdp-hooks";
 import { AuthButton } from "@coinbase/cdp-react/components/AuthButton";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogClose,
-  DialogDescription,
-} from "./ui/dialog";
-import { Alert, AlertTitle } from "./ui/alert";
-import {
+  AlertCircleIcon,
   ArrowDownIcon,
   ArrowLeftIcon,
-  AlertCircleIcon,
-  QrCodeIcon,
-  XIcon,
   ArrowUpIcon,
   LogOutIcon,
+  QrCodeIcon,
+  XIcon,
 } from "lucide-react";
-import { Button } from "./ui/button";
+import { useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 import { Address } from "./address";
+import { Alert, AlertTitle } from "./ui/alert";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "./ui/dialog";
 
 enum Tab {
   Account = "account",
@@ -40,6 +41,7 @@ export const AccountManager = () => {
   const { signOut } = useSignOut();
   const { isSignedIn } = useIsSignedIn();
   const { evmAddress } = useEvmAddress();
+  const { data: balance } = useBalance(evmAddress);
 
   const tabs = useMemo(() => {
     return {
@@ -48,14 +50,14 @@ export const AccountManager = () => {
         description: "Your account address is ready to be used.",
         content: (
           <>
-            <Address
-              address={
-                evmAddress ?? "0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0"
-              }
-              balance={0}
-              balanceLabel="USDC"
-              className="mb-6"
-            />
+            {evmAddress && (
+              <Address
+                address={evmAddress}
+                balance={balance}
+                balanceLabel="USDC"
+                className="mb-6"
+              />
+            )}
 
             <div className="flex flex-col gap-2">
               <Button
@@ -65,7 +67,7 @@ export const AccountManager = () => {
                 variant="outline"
               >
                 <ArrowDownIcon className="w-4 h-4" />
-                <span>Add USDC</span>
+                Add USDC
               </Button>
 
               <Button
@@ -75,7 +77,7 @@ export const AccountManager = () => {
                 variant="outline"
               >
                 <ArrowUpIcon className="w-4 h-4" />
-                <span>Withdraw USDC</span>
+                Withdraw USDC
               </Button>
 
               <Button
@@ -85,7 +87,7 @@ export const AccountManager = () => {
                 variant="outline"
               >
                 <LogOutIcon className="w-4 h-4" />
-                <span>Sign out</span>
+                Sign out
               </Button>
             </div>
           </>
@@ -96,15 +98,15 @@ export const AccountManager = () => {
         description: "Withdraw your rewards to your wallet",
         content: (
           <>
-            <Address
-              label="From"
-              address={
-                evmAddress ?? "0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0"
-              }
-              balance={0}
-              balanceLabel="USDC"
-              className="mb-2"
-            />
+            {evmAddress && (
+              <Address
+                label="From"
+                address={evmAddress}
+                balance={balance}
+                balanceLabel="USDC"
+                className="mb-2"
+              />
+            )}
 
             <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-2">
               <span className="text-xs text-muted-foreground absolute left-4 top-1">
@@ -145,7 +147,7 @@ export const AccountManager = () => {
                 size="lg"
               >
                 <ArrowDownIcon className="w-4 h-4" />
-                <span>Onramp USDC</span>
+                Onramp USDC
               </Button>
 
               <Button
@@ -155,7 +157,7 @@ export const AccountManager = () => {
                 size="lg"
               >
                 <QrCodeIcon className="w-4 h-4" />
-                <span>Receive USDC</span>
+                Receive USDC
               </Button>
             </div>
           </>
@@ -183,18 +185,18 @@ export const AccountManager = () => {
               </AlertTitle>
             </Alert>
 
-            <Address
-              address={
-                evmAddress ?? "0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0"
-              }
-              balance={0}
-              balanceLabel="USDC"
-            />
+            {evmAddress && (
+              <Address
+                address={evmAddress}
+                balance={balance}
+                balanceLabel="USDC"
+              />
+            )}
           </div>
         ),
       },
     } as const;
-  }, []);
+  }, [balance, evmAddress]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { CheckIcon, RadioIcon, XIcon } from "lucide-react";
-import { ChallengeStatus } from "@/types/challenges";
+import { ChallengeStatus } from "@cdp/common/src/types/challenge";
+import { CheckIcon, ClockIcon, RadioIcon } from "lucide-react";
 
 export const StatusIcon: React.FC<{
   status: ChallengeStatus;
@@ -13,7 +13,7 @@ export const StatusIcon: React.FC<{
       />
     );
   }
-  if (status === "passed") {
+  if (status === "completed") {
     return (
       <div
         className={cn(
@@ -25,7 +25,7 @@ export const StatusIcon: React.FC<{
       </div>
     );
   }
-  if (status === "rejected") {
+  if (status === "pending") {
     return (
       <div
         className={cn(
@@ -33,7 +33,7 @@ export const StatusIcon: React.FC<{
           className
         )}
       >
-        <XIcon className="w-2 h-2 text-white" />
+        <ClockIcon className="w-2 h-2 text-white" />
       </div>
     );
   }

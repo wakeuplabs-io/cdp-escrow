@@ -1,12 +1,12 @@
 import {
-  encodeFunctionData,
-  PublicClient,
-  createPublicClient,
-  http,
   Address,
+  createPublicClient,
+  encodeFunctionData,
+  http,
+  PublicClient,
 } from "viem";
-import { erc20Abi } from "../abis/erc20.js";
-import { TxParameters } from "../types/tx.js";
+import { erc20Abi } from "../abis/erc20";
+import { TxParameters } from "../types/tx";
 
 export class Erc20Service {
   private readonly publicClient: PublicClient;
@@ -28,7 +28,7 @@ export class Erc20Service {
       args: [address],
     });
 
-    return balance;
+    return BigInt(balance);
   }
 
   async prepareApprove(

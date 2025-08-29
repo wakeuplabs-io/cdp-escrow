@@ -1,4 +1,4 @@
-import { Account, Address, Chain, Hex } from "viem"
+import { Address, Hex } from "viem"
 
 export type TxParameters = {
     to: Address;

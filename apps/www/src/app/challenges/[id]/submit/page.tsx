@@ -1,44 +1,62 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { SendHorizontalIcon } from "lucide-react";
-import Markdown from "react-markdown";
-import { useState, useMemo } from "react";
-import { useCallback } from "react";
 import { BackButton } from "@/components/back-button";
-import { toast } from "sonner";
-import { Tooltip } from "react-tooltip";
-import { challengeMetadataSchema } from "@/types/challenges";
-import { useCreateChallenge } from "@/hooks/challenges";
+import { useChallenge } from "@/hooks/challenges";
+import { useCreateSubmission } from "@/hooks/submissions";
+import { cn } from "@/lib/utils";
+import { submissionMetadataSchema } from "@cdp/common/src/types/submission";
+import { useEvmAddress } from "@coinbase/cdp-hooks";
+import { SendHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import React, { useCallback, useMemo, useState } from "react";
+import Markdown from "react-markdown";
+import { Tooltip } from "react-tooltip";
+import { toast } from "sonner";
 
-export default function CreateChallengePage() {
-  const [body, setBody] = useState("");
-  const [title, setTitle] = useState("");
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
+  const { id } = React.use(params);
+  const { evmAddress } = useEvmAddress();
+
+  const [contact, setContact] = useState("");
+  const [description, setDescription] = useState("");
   const [preview, setPreview] = useState(false);
 
-  const router = useRouter();
+  const { data: challenge } = useChallenge(Number(id));
+  const { mutateAsync: createSubmission, isPending: isCreatingSubmission } =
+    useCreateSubmission();
 
-  const { mutateAsync: createChallenge, isPending: isCreatingChallenge } =
-    useCreateChallenge();
-
-  const onCreateChallenge = useCallback(async () => {
+  const onCreateSubmission = useCallback(async () => {
     // submit is disabled if validation fails, so here we can assume it's valid
     try {
-      const challengeId = await createChallenge();
-      router.push(`/challenges/${challengeId}`);
+      await createSubmission({
+        challengeId: BigInt(id),
+        contact,
+        description: description,
+      });
+      router.push(`/challenges/${id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create challenge", {
+      toast.error("Failed to create submission", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [title, body, createChallenge, router]);
+  }, [description, contact, createSubmission, router]);
 
   const validation = useMemo(() => {
-    const result = challengeMetadataSchema.safeParse({
-      title,
-      body,
+    if (!contact) {
+      return { isValid: false, errors: ["Contact is required"] };
+    } else if (challenge?.status !== "active") {
+      return { isValid: false, errors: ["Challenge is not active"] };
+    } else if (challenge?.admin === evmAddress) {
+      return {
+        isValid: false,
+        errors: ["You are the admin of this challenge"],
+      };
+    }
+
+    const result = submissionMetadataSchema.safeParse({
+      description,
     });
 
     if (result.success) {
@@ -47,9 +65,9 @@ export default function CreateChallengePage() {
 
     const errors = result.error.issues.map((issue) => issue.message);
     return { isValid: false, errors };
-  }, [title, body]);
+  }, [description, contact, challenge?.status, challenge?.admin, evmAddress]);
 
-  const errorMessage = validation.errors[0];
+  const errorMessage = useMemo(() => validation.errors[0], [validation.errors]);
 
   return (
     <div className="">
@@ -57,12 +75,12 @@ export default function CreateChallengePage() {
         <BackButton to="/" />
 
         <button
-          disabled={!validation.isValid || isCreatingChallenge}
-          onClick={onCreateChallenge}
+          disabled={!validation.isValid || isCreatingSubmission}
+          onClick={onCreateSubmission}
           className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
           data-tooltip-id="error-tooltip"
         >
-          <span>{isCreatingChallenge ? "Creating..." : "Publish"}</span>
+          <span>{isCreatingSubmission ? "Creating..." : "Submit"}</span>
           <SendHorizontalIcon className="w-4 h-4" />
         </button>
 
@@ -80,13 +98,12 @@ export default function CreateChallengePage() {
             </span>
             <input
               type="text"
-              value={title}
+              value={contact}
               placeholder="Contact email"
               className="w-full h-full outline-none mt-4"
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setContact(e.target.value)}
             />
           </div>
-
 
           {/* Body input */}
           <div className="mb-6">
@@ -112,20 +129,21 @@ export default function CreateChallengePage() {
             </div>
 
             {preview ? (
-              <div className="prose border rounded-lg p-4">
-                <Markdown>{body}</Markdown>
+              <div className=" border rounded-lg p-4">
+                <div className="prose">
+                  <Markdown>{description}</Markdown>
+                </div>
               </div>
             ) : (
               <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full h-full outline-none bg-muted p-4 rounded-lg"
                 placeholder="Write your markdown challenge here..."
                 rows={10}
               />
             )}
           </div>
-
 
           <div className="">
             <div className="font-medium mb-2">How it works</div>

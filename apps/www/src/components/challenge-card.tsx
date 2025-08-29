@@ -3,20 +3,18 @@ import { useMemo } from "react";
 import { StatusIcon } from "./status-badge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { Challenge } from "@/types/challenges";
+import { Challenge } from "@cdp/common/src/types/challenge";
 
 export const ChallengeCard: React.FC<{
   challenge: Challenge;
 }> = ({ challenge }) => {
 
-  const totalSubmissions = 0;
-
   const timeString = useMemo(() => {
     if (challenge.status === "active") {
-      return formatDistanceToNow(new Date(challenge.deadline)) + " left";
+      return formatDistanceToNow(new Date(challenge.endsAt)) + " left";
     }
-    return formatDistanceToNow(challenge.deadline) + " ago";
-  }, [challenge.deadline]);
+    return formatDistanceToNow(challenge.endsAt) + " ago";
+  }, [challenge.endsAt]);
 
   return (
     <div className="flex items-center justify-between w-full gap-2 py-[14px]">
@@ -29,8 +27,7 @@ export const ChallengeCard: React.FC<{
         </div>
 
         <div className="text-muted-foreground text-sm">
-          #{challenge.id} by {shortenAddress(challenge.author)} · {totalSubmissions}{" "}
-          submissions · {timeString}
+          #{challenge.id} by {shortenAddress(challenge.admin)} · {timeString}
         </div>
       </Link>
     </div>

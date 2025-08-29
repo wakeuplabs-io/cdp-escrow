@@ -1,19 +1,47 @@
 import {
-  decodeEventLog,
-  encodeFunctionData,
-  encodeEventTopics,
-  getAddress,
-  erc20Abi,
   Address,
   PublicClient,
-  http,
   createPublicClient,
+  decodeEventLog,
+  encodeEventTopics,
+  encodeFunctionData,
+  erc20Abi,
+  getAddress,
+  http,
 } from "viem";
-import { escrowAbi } from "../abis/escrow.js";
-import { IpfsClient } from "./ipfs.js";
-import { Challenge, ChallengeStatus } from "../types/challenge.js";
-import { Submission, SubmissionStatus } from "../types/submission.js";
-import { TxParameters } from "../types/tx.js";
+import { escrowAbi } from "../abis/escrow";
+import { Challenge, ChallengeStatus } from "../types/challenge";
+import { Submission, SubmissionStatus } from "../types/submission";
+import { TxParameters } from "../types/tx";
+import { IpfsClient } from "./ipfs";
+
+export type CreateChallengeParams = {
+  title: string;
+  description: string;
+  poolSize: bigint;
+  endDate: Date;
+};
+
+export type ResolveChallengeParams = {
+  challengeId: bigint;
+  winners: bigint[];
+  ineligible: bigint[];
+};
+
+export type CreateSubmissionParams = {
+  challengeId: bigint;
+  contact: string;
+  description: string;
+};
+
+export type WithdrawParams = {
+  amount: bigint;
+  to: string;
+};
+
+export type ApproveParams = {
+  amount: bigint;
+};
 
 export class EscrowService {
   private readonly publicClient: PublicClient;
@@ -53,7 +81,12 @@ export class EscrowService {
 
     return {
       id: Number(id),
-      status: endsAt > new Date() ? "active" : ("completed" as ChallengeStatus),
+      status:
+        challenge.status === 0
+          ? endsAt > new Date()
+            ? "active"
+            : "pending"
+          : "completed",
       endsAt: endsAt,
       createdAt: new Date(Number(challenge.createdAt) * 1000),
       poolSize: challenge.poolSize,
@@ -61,9 +94,11 @@ export class EscrowService {
         title: metadata.title,
         description: metadata.description,
       },
+      admin: challenge.admin,
     };
   }
 
+  // TODO: turn into multicall instead
   async getChallengesPaginated(
     startIndex: number,
     count: number
@@ -94,6 +129,7 @@ export class EscrowService {
             title: metadata.title,
             description: metadata.description,
           },
+          admin: challenge.admin,
         };
       })
     );
@@ -101,7 +137,7 @@ export class EscrowService {
     return data;
   }
 
-  async prepareApprove(amount: bigint) {
+  async prepareApprove({ amount }: ApproveParams) {
     return {
       to: this.erc20Address,
       data: encodeFunctionData({
@@ -119,12 +155,7 @@ export class EscrowService {
     description,
     poolSize,
     endDate,
-  }: {
-    title: string;
-    description: string;
-    poolSize: bigint;
-    endDate: string;
-  }) {
+  }: CreateChallengeParams) {
     // Pin the metadata as json to ipfs
     const metadataURI = await this.ipfsClient.uploadJSON({
       title: title,
@@ -139,7 +170,7 @@ export class EscrowService {
         args: [
           metadataURI,
           poolSize,
-          BigInt(Math.floor(new Date(endDate).getTime() / 1000)),
+          BigInt(Math.floor(endDate.getTime() / 1000)),
         ],
       }),
       value: 0n,
@@ -173,28 +204,24 @@ export class EscrowService {
   }
 
   async prepareResolveChallenge(
-    challengeId: bigint,
-    winners: bigint[],
-    invalidSubmissions: bigint[]
+    params: ResolveChallengeParams
   ): Promise<TxParameters> {
     return {
       to: this.escrowAddress,
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "resolveChallenge",
-        args: [challengeId, winners, invalidSubmissions],
+        args: [params.challengeId, params.winners, params.ineligible],
       }),
       value: 0n,
     };
   }
 
   async prepareCreateSubmission(
-    challengeId: bigint,
-    contact: string,
-    description: string
+    params: CreateSubmissionParams
   ): Promise<TxParameters> {
     const submissionURI = await this.ipfsClient.uploadJSON({
-      description: description,
+      description: params.description,
     });
 
     return {
@@ -202,7 +229,7 @@ export class EscrowService {
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "createSubmission",
-        args: [challengeId, contact, submissionURI],
+        args: [params.challengeId, params.contact, submissionURI],
       }),
       value: 0n,
     };
@@ -232,6 +259,25 @@ export class EscrowService {
     return (decoded.args as any).submissionId;
   }
 
+  async hasSubmission(challengeId: bigint, user: Address): Promise<boolean> {
+    return await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "submitted",
+      args: [challengeId, user],
+    });
+  }
+
+  async getSubmissionsCount(challengeId: bigint): Promise<number> {
+    const count = await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "getSubmissionsCount",
+      args: [challengeId],
+    });
+    return Number(count);
+  }
+
   async getSubmissionById(
     challengeId: bigint,
     submissionId: bigint
@@ -258,7 +304,6 @@ export class EscrowService {
         [3]: "ineligible",
       }[Number(submission.status)] as SubmissionStatus, // TODO: check if this is correct
       metadata: {
-        title: metadata.title,
         description: metadata.description,
       },
     };
@@ -303,18 +348,18 @@ export class EscrowService {
     return await this.publicClient.readContract({
       address: this.escrowAddress,
       abi: escrowAbi,
-      functionName: "balanceOf",
+      functionName: "getBalance",
       args: [address],
     });
   }
 
-  async prepareWithdraw(amount: bigint, to: string): Promise<TxParameters> {
+  async prepareWithdraw(params: WithdrawParams): Promise<TxParameters> {
     return {
       to: this.escrowAddress,
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "withdraw",
-        args: [amount, getAddress(to)],
+        args: [params.amount, getAddress(params.to)],
       }),
       value: 0n,
     };

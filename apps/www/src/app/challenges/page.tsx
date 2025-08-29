@@ -12,7 +12,7 @@ import { ChallengeCard } from "@/components/challenge-card";
 export default function ChallengesPage() {
   const { isSignedIn } = useIsSignedIn();
   const loadMoreRef = useRef(null);
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isPending } =
     useChallenges();
 
   const sortedChallenges = useMemo(() => {
@@ -89,7 +89,7 @@ export default function ChallengesPage() {
           ))}
 
           <div ref={loadMoreRef} className="py-4">
-            {isFetchingNextPage
+            {isPending
               ? "Loading more..."
               : hasNextPage
               ? "Load more"

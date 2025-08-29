@@ -1,39 +1,125 @@
 "use client";
 
 import { AccountManager } from "@/components/account-manager";
-import { BackButton } from "@/components/back-button";
-import { cn, shortenAddress } from "@/lib/utils";
+import { ClaimButton } from "@/components/claim-button";
+import { ResolveButton } from "@/components/resolve-button";
+import { StatusBadge } from "@/components/status-badge";
+import { SubmissionCard } from "@/components/submission-card";
+import { SubmitButton } from "@/components/submit-button";
+import { useChallenge } from "@/hooks/challenges";
+import { useSubmissionCount, useSubmissions } from "@/hooks/submissions";
+import { cn } from "@/lib/utils";
+import { Submission } from "@cdp/common/src/types/submission";
+import { useEvmAddress } from "@coinbase/cdp-hooks";
+import { formatDistanceToNow } from "date-fns";
 import {
   AudioWaveformIcon,
   ClockIcon,
+  DollarSignIcon,
   MousePointerClickIcon,
-  ArrowRightIcon,
-  ArrowUpRightIcon,
-  EllipsisVerticalIcon,
-  ShareIcon,
 } from "lucide-react";
-import Markdown from "react-markdown";
-import { StatusBadge } from "@/components/status-badge";
-import { useEffect, useMemo, useState } from "react";
-import { Tooltip } from "react-tooltip";
-import { useChallenge } from "@/hooks/challenges";
 import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import Markdown from "react-markdown";
+import { formatEther } from "viem";
 
-export default function Index() {
-  const { data: challenge, isPending } = useChallenge(1);
-  const [activeTab, setActiveTab] = useState<"overview" | "submissions">(
-    "overview"
+enum ActiveTab {
+  Overview = "overview",
+  Submissions = "submissions",
+}
+
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
+
+  const { data: challenge, isPending: isChallengePending } = useChallenge(
+    Number(id)
+  );
+  const { data: submissionCount } = useSubmissionCount(Number(id));
+  const {
+    data: submissions,
+    isPending: isSubmissionsPending,
+    fetchNextPage,
+    hasNextPage,
+  } = useSubmissions(Number(id));
+  const { evmAddress } = useEvmAddress();
+
+  // state
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Overview);
+  const [winners, setWinners] = useState<string[]>([]);
+  const [ineligible, setIneligible] = useState<string[]>([]);
+
+  const onMarkAsWinner = useCallback(
+    (submission: Submission) => {
+      setWinners([...winners, submission.creator]);
+      setIneligible(
+        ineligible.filter((ineligible) => ineligible !== submission.creator)
+      );
+    },
+    [winners, ineligible]
   );
 
-  if (isPending || !challenge)
+  const onMarkAsIneligible = useCallback(
+    (submission: Submission) => {
+      setIneligible([...ineligible, submission.creator]);
+      setWinners(winners.filter((winner) => winner !== submission.creator));
+    },
+    [winners, ineligible]
+  );
+
+  const onMarkAsAcceptable = useCallback(
+    (submission: Submission) => {
+      setIneligible(
+        ineligible.filter((ineligible) => ineligible !== submission.creator)
+      );
+      setWinners(winners.filter((winner) => winner !== submission.creator));
+    },
+    [ineligible]
+  );
+
+  // infinite scroll
+  const loadMoreRef = useRef(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage]);
+
+  const timeString = useMemo(() => {
+    if (!challenge) return "";
+
+    if (challenge.status === "active") {
+      return formatDistanceToNow(new Date(challenge.endsAt)) + " left";
+    }
+    return formatDistanceToNow(challenge.endsAt) + " ago";
+  }, [challenge?.endsAt, challenge?.status]);
+
+  const sortedSubmissions = useMemo(() => {
+    if (!submissions) return [];
+    return submissions?.pages
+      .flatMap((page) => page.submissions)
+      .sort((a, b) => b.id - a.id);
+  }, [submissions]);
+
+  const isAdmin = useMemo(
+    () => challenge?.admin === evmAddress,
+    [challenge?.admin, evmAddress]
+  );
+
+  if (isChallengePending || !challenge)
     return (
       <div className="flex items-center justify-center h-full w-full p-10">
         Loading...
@@ -52,34 +138,38 @@ export default function Index() {
       </div>
 
       <div className="flex divide-x">
+        {/* Main content */}
         <div className="min-h-screen flex-1">
+          {/* Tabs navigation */}
           <div className="border-b w-full px-5 flex ">
             <button
               className={cn(
                 "px-3 py-2 uppercase text-muted-foreground text-xs font-bold",
-                activeTab === "overview" &&
+                activeTab === ActiveTab.Overview &&
                   "border-b border-b-foreground text-foreground"
               )}
-              onClick={() => setActiveTab("overview")}
+              onClick={() => setActiveTab(ActiveTab.Overview)}
             >
               Overview
             </button>
             <button
               className={cn(
                 "px-3 py-2 uppercase text-muted-foreground text-xs font-bold flex items-center gap-2",
-                activeTab === "submissions" &&
+                activeTab === ActiveTab.Submissions &&
                   "border-b border-b-foreground text-foreground"
               )}
-              onClick={() => setActiveTab("submissions")}
+              onClick={() => setActiveTab(ActiveTab.Submissions)}
             >
               <span>Submissions</span>
-              <span className="bg-muted rounded-full px-2 py-1 text-xs">2</span>
+              <span className="bg-muted rounded-full px-2 py-1 text-xs">
+                {submissionCount}
+              </span>
             </button>
           </div>
 
           <div className="p-6 pt-8 pb-20 w-full">
             <div className="max-w-[600px] mx-auto">
-              {activeTab === "overview" ? (
+              {activeTab === ActiveTab.Overview ? (
                 <div>
                   <h1 className="text-4xl break-words font-bold mb-4">
                     {challenge.metadata.title}
@@ -88,90 +178,57 @@ export default function Index() {
                   <StatusBadge status={challenge.status} />
 
                   <div className="prose prose-sm">
-                    <Markdown>{challenge.metadata.body}</Markdown>
+                    <Markdown>{challenge.metadata.description}</Markdown>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-                    <span>22 submissions</span>
+                    <span>{submissionCount} submissions</span>
                     <span>·</span>
-                    <span>3d left</span>
+                    <span>{timeString}</span>
                   </div>
                 </div>
               ) : (
-                <div className="divide-y py-6">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src="/avatar.webp"
-                          alt="avatar"
-                          className="w-[32px] h-[32px] rounded-full"
-                        />
-                        <div>
-                          <div className="text-sm">
-                            {shortenAddress(challenge.author)}
-                          </div>
-                          <div className="text-xs text-muted-foreground space-x-2">
-                            {challenge.createdAt.toLocaleDateString()} · #
-                            {challenge.id}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <ShareIcon className="w-4 h-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className="w-56"
-                            align="start"
-                            side="left"
-                          >
-                            <DropdownMenuItem>Copy link</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                <div className="divide-y py-6 pb-8 pt-0">
+                  {sortedSubmissions.map((submission) => (
+                    <SubmissionCard
+                      key={submission.id}
+                      submission={submission}
+                      isAdmin={isAdmin}
+                      isWinner={winners.includes(submission.creator)}
+                      isIneligible={ineligible.includes(submission.creator)}
+                      onMarkAsWinner={() => onMarkAsWinner(submission)}
+                      onMarkAsIneligible={() => onMarkAsIneligible(submission)}
+                      onMarkAsAcceptable={() => onMarkAsAcceptable(submission)}
+                    />
+                  ))}
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <EllipsisVerticalIcon className="w-4 h-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className="w-56"
-                            align="start"
-                            side="left"
-                          >
-                            <DropdownMenuItem>Mark as Invalid</DropdownMenuItem>
-                            <DropdownMenuItem>Mark as Winner</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-
-                    <div className="prose prose-sm mt-4">
-                      <Markdown>{challenge.metadata.body}</Markdown>
-                    </div>
+                  <div
+                    ref={loadMoreRef}
+                    className={cn(
+                      "pt-8",
+                      sortedSubmissions.length === 0 && "py-0"
+                    )}
+                  >
+                    {isSubmissionsPending
+                      ? "Loading more..."
+                      : hasNextPage
+                      ? "Load more."
+                      : sortedSubmissions.length === 0
+                      ? "No submissions yet."
+                      : "No more submissions."}
                   </div>
                 </div>
               )}
             </div>
-
-            <div className="w-full border-t flex justify-center items-center">
-              <Link
-                href={`/challenges/${challenge.id}/submit`}
-                className="py-3 px-6 uppercase text-sm font-bold w-full max-w-[600px] mt-8 rounded-full border flex items-center justify-center gap-2 hover:bg-muted cursor-pointer"
-              >
-                <span>Submit your solution</span>
-                <ArrowUpRightIcon className="w-4 h-4" />
-              </Link>
-            </div>
           </div>
         </div>
 
+        {/* Sidebar */}
         <div className="w-[400px] p-6 pb-20">
           {/* Prize pool */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3 text-gray-600">
-              <MousePointerClickIcon className="h-4 w-4" />
+              <DollarSignIcon className="h-4 w-4" />
 
               <span className="uppercase font-semibold text-sm">
                 Prize pool
@@ -180,14 +237,18 @@ export default function Index() {
 
             <div className="flex items-center gap-2">
               <div className="flex items-end gap-2">
-                <span className="text-2xl font-bold">1000</span>
-                <span className="text-sm text-muted-foreground mb-0.5">USDC</span>
+                <span className="text-2xl font-bold">
+                  {formatEther(challenge.poolSize)}
+                </span>
+                <span className="text-sm text-muted-foreground mb-0.5">
+                  USDC
+                </span>
               </div>
             </div>
           </div>
 
           {/* Timeline */}
-          <div>
+          <div className="mb-6">
             <div className="flex items-center gap-2 mb-3 text-gray-600">
               <ClockIcon className="h-4 w-4" />
 
@@ -222,7 +283,7 @@ export default function Index() {
                   <h4 className=" font-medium">End</h4>
                   <div className="flex gap-2 items-center text-muted-foreground">
                     <div>
-                      {challenge.deadline.toLocaleString(undefined, {
+                      {challenge.endsAt.toLocaleString(undefined, {
                         dateStyle: "medium",
                         timeStyle: "short",
                       })}
@@ -230,6 +291,29 @@ export default function Index() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-3 text-gray-600">
+              <MousePointerClickIcon className="h-4 w-4" />
+
+              <span className="uppercase font-semibold text-sm">Actions</span>
+            </div>
+            <div className="w-full flex justify-center items-center">
+              {challenge.status === "active" ? (
+                <SubmitButton challengeId={Number(id)} />
+              ) : challenge.status === "pending" && isAdmin ? (
+                <ResolveButton
+                  challengeId={Number(id)}
+                  winners={winners}
+                  ineligible={ineligible}
+                />
+              ) : challenge.status === "pending" && !isAdmin ? (
+                <div>Awaiting for Admin resolution</div>
+              ) : (
+                <ClaimButton challengeId={Number(id)} />
+              )}
             </div>
           </div>
         </div>
