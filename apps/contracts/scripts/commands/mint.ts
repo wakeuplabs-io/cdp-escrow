@@ -1,9 +1,9 @@
+import { Erc20Service } from "@cdp/common/src/services/erc20";
+import { Command } from "commander";
 import "dotenv/config";
 import { parseEther } from "viem";
-import { configByNetwork, walletClientByNetwork } from "../../config.js";
-import { Command } from "commander";
-import { Erc20Service } from "@cdp/common/src/services/erc20.js";
 import { privateKeyToAccount } from "viem/accounts";
+import { configByNetwork, walletClientByNetwork } from "../../config";
 
 export const mintCommand = new Command("mint")
   .description("Mint tokens")

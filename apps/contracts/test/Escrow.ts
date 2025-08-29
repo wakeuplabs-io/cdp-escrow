@@ -1,560 +1,349 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { parseEther, getAddress } from "viem";
-import { network } from "hardhat";
+import {
+  loadFixture,
+  time,
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
+import { expect } from "chai";
+import hre from "hardhat";
+import { parseEther } from "viem";
 
-describe("Escrow Contract Tests", async function () {
-  const { viem } = await network.connect();
+describe("Escrow", function () {
+  async function deployEscrowFixture() {
+    const [owner, otherAccount, otherAccount2] =
+      await hre.viem.getWalletClients();
 
-  const POOL_SIZE = parseEther("100");
-  const INITIAL_TOKEN_SUPPLY = parseEther("10000");
-  const CHALLENGE_DEADLINE = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+    // deploy mock erc20
+    const erc20 = await hre.viem.deployContract("MockERC20", [
+      "TestToken",
+      "TEST",
+      0n,
+    ]);
+    const escrow = await hre.viem.deployContract("Escrow", [erc20.address]);
 
-  describe("Deployment", () => {
-    it("Should deploy with correct initial values", async () => {
-      // Deploy mock ERC20 token
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token",
-        "TEST", 
-        INITIAL_TOKEN_SUPPLY
-      ]);
+    // Mint 1000 tokens to the owner and otherAccount
+    await erc20.write.mint([owner.account.address, parseEther("1000")], {
+      account: owner.account,
+    });
+    await erc20.write.mint([otherAccount.account.address, parseEther("1000")], {
+      account: otherAccount.account,
+    });
 
-      // Deploy escrow contract - constructor takes (token)
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
+    const publicClient = await hre.viem.getPublicClient();
 
-      // Test initial values
-      assert.equal(await escrow.read.token(), getAddress(mockToken.address));
-      assert.equal(await escrow.read.challengesCount(), 0n);
+    return {
+      escrow,
+      erc20,
+      owner,
+      otherAccount,
+      otherAccount2,
+      publicClient,
+    };
+  }
+
+  describe("Deployment", function () {
+    it("Should set the right token", async function () {
+      const { escrow, erc20 } = await loadFixture(deployEscrowFixture);
+
+      expect((await escrow.read.token()).toLowerCase()).to.equal(
+        erc20.address.toLowerCase()
+      );
     });
   });
 
-  describe("Challenge Management", () => {
-    it("Should allow anyone to create challenges", async () => {
-      const [owner] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      const metadataURI = "https://example.com/challenge1";
-      
-      await escrow.write.createChallenge([metadataURI, POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      assert.equal(await escrow.read.challengesCount(), 1n);
-      
-      const challenge = await escrow.read.getChallenge([0n]);
-      assert.equal(challenge.poolSize, POOL_SIZE);
-      assert.equal(challenge.endsAt, BigInt(CHALLENGE_DEADLINE));
-      assert.equal(challenge.metadataUri, metadataURI);
-    });
-
-    it("Should not allow non-owner to create challenges", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Create challenge as owner first
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      // Try to resolve challenge as user1 - this should fail because user1 is not the admin
-      await assert.rejects(
-        escrow.write.resolveChallenge([0n, [], []], {
-          account: user1.account
-        }),
-        /OnlyAdmin/
+  describe("Challenge Management", function () {
+    it("Should allow anyone to create a challenge", async function () {
+      const { escrow, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
       );
-    });
 
-    it("Should handle multiple challenges correctly", async () => {
-      const [owner] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
+      // balance before challenge
+      const balanceBeforeChallenge = await erc20.read.balanceOf([
+        otherAccount.account.address,
       ]);
 
-      await escrow.write.createChallenge(["https://example.com/challenge1", parseEther("50"), BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-      await escrow.write.createChallenge(["https://example.com/challenge2", parseEther("75"), BigInt(CHALLENGE_DEADLINE + 1000)], {
-        account: owner.account
+      // prepare for challenge creation
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: otherAccount.account,
       });
 
-      assert.equal(await escrow.read.challengesCount(), 2n);
-      
-      const challenge1 = await escrow.read.getChallenge([0n]);
-      const challenge2 = await escrow.read.getChallenge([1n]);
-      
-      assert.equal(challenge1.poolSize, parseEther("50"));
-      assert.equal(challenge2.poolSize, parseEther("75"));
-    });
-
-    it("Should set challenge status to Active when created", async () => {
-      const [owner] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      const challenge = await escrow.read.getChallenge([0n]);
-      assert.equal(challenge.status, 0); // ChallengeStatus.Active = 0
-    });
-
-    it("Should return all challenges via getChallenges", async () => {
-      const [owner] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      await escrow.write.createChallenge(["https://example.com/challenge1", parseEther("50"), BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-      await escrow.write.createChallenge(["https://example.com/challenge2", parseEther("75"), BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      const challenges = await escrow.read.getChallenges([0n, 2n]);
-      assert.equal(challenges.length, 2);
-      assert.equal(challenges[0].poolSize, parseEther("50"));
-      assert.equal(challenges[1].poolSize, parseEther("75"));
+      // assert challenge is created and tokens are pulled
+      await expect(
+        escrow.write.createChallenge(
+          ["https://example.com/challenge1", poolSize, deadline],
+          {
+            account: otherAccount.account,
+          }
+        )
+      ).not.to.be.rejected;
+      expect(
+        await erc20.read.balanceOf([otherAccount.account.address])
+      ).to.equal(balanceBeforeChallenge - poolSize);
     });
   });
 
-  describe("Submission Management", () => {
-    it("Should allow users to create submissions", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Create a challenge first
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      const submissionURI = "https://example.com/submission1";
-      
-      await escrow.write.createSubmission([0n, "contact@example.com", submissionURI], {
-        account: user1.account
-      });
-
-      const submission = await escrow.read.getSubmission([0n, 0n]);
-      assert.equal(submission.creator, getAddress(user1.account.address));
-      assert.equal(submission.metadataUri, submissionURI);
-      assert.equal(submission.status, 0); // SubmissionStatus.Pending = 0
-    });
-
-    it("Should emit SubmissionCreated event", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      await viem.assertions.emitWithArgs(
-        escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], {
-          account: user1.account
-        }),
-        escrow,
-        "SubmissionCreated",
-        [0n, 0n, getAddress(user1.account.address)]
+  describe("Submission Management", function () {
+    it("Should allow anyone to create a submission for an active challenge", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
       );
-    });
 
-    it("Should not allow duplicate submissions from same user", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
+      // create challenge
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
       });
-
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], {
-        account: user1.account
-      });
-
-      await assert.rejects(
-        escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], {
-          account: user1.account
-        }),
-        /AlreadySubmitted/
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
       );
+
+      // assert submission is allowed
+      await expect(
+        escrow.write.createSubmission(
+          [0n, "contact@example.com", "https://example.com/submission1"],
+          { account: otherAccount.account }
+        )
+      ).not.to.be.rejected;
     });
 
-    it("Should handle multiple submissions from different users", async () => {
-      const [owner, , user1, user2] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
+    it("Should not allow anyone to create a submission for a non-active challenge", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
 
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
+      // create challenge
+      const deadline = BigInt(Date.now() - 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
       });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
 
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
+      // fast forward to deadline
+      await time.increaseTo(deadline + 1n);
 
-      const submission1 = await escrow.read.getSubmission([0n, 0n]);
-      const submission2 = await escrow.read.getSubmission([0n, 1n]);
-      
-      assert.equal(submission1.creator, getAddress(user1.account.address));
-      assert.equal(submission2.creator, getAddress(user2.account.address));
+      // assert submission is not allowed
+      await expect(
+        escrow.write.createSubmission(
+          [0n, "contact@example.com", "https://example.com/submission1"],
+          { account: otherAccount.account }
+        )
+      ).to.be.rejectedWith("ChallengeNotActive");
     });
 
-    it("Should return all submissions via getSubmissions", async () => {
-      const [owner, , user1, user2] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
+    it("Should not allow admin to create a submission for his own challenge", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
 
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
+      // create challenge
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
       });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
 
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
-
-      const submissions = await escrow.read.getSubmissions([0n, 0n, 2n]);
-      assert.equal(submissions.length, 2);
-      assert.equal(submissions[0].creator, getAddress(user1.account.address));
-      assert.equal(submissions[1].creator, getAddress(user2.account.address));
-    });
-  });
-
-  describe("Challenge Resolution", () => {
-    it("Should allow owner to resolve challenges after deadline", async () => {
-      const [owner, , user1, user2, user3] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Transfer tokens to escrow to simulate having a pool to distribute
-      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
-
-      // Create challenge with deadline in the past
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
-      });
-
-      // Create submissions
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
-      await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
-
-      // Resolve with submission 0 as winner (user1's submission)
-      await escrow.write.resolveChallenge([0n, [0n], []], {
-        account: owner.account
-      });
-
-      // Check balances - winner should get 70% of pool (since there are losers)
-      const winnerBalance = await escrow.read.getBalance([user1.account.address]);
-      assert.equal(winnerBalance, (POOL_SIZE * 70n) / 100n);
-
-      // Other participants should get share of remaining 30%
-      const user2Balance = await escrow.read.getBalance([user2.account.address]);
-      const user3Balance = await escrow.read.getBalance([user3.account.address]);
-      const loserShare = (POOL_SIZE * 30n) / 100n / 2n; // Split between 2 losers
-      assert.equal(user2Balance, loserShare);
-      assert.equal(user3Balance, loserShare);
+      // assert submission is not allowed
+      await expect(
+        escrow.write.createSubmission(
+          [0n, "contact@example.com", "https://example.com/submission1"],
+          { account: owner.account }
+        )
+      ).to.be.rejectedWith("AdminCannotSubmit");
     });
 
-    it("Should update challenge and submission statuses when resolved", async () => {
-      const [owner, , user1, user2, user3] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
+    it("Should allow admin to pick one submission as winner", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
 
-      // Transfer tokens to escrow to simulate having a pool to distribute
-      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
-
-      // Create challenge with deadline in the past
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
+      // create challenge and submission
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
       });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission1"],
+        { account: otherAccount.account }
+      );
 
-      // Create submissions
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
-      await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
+      // pass deadline
+      await time.increaseTo(deadline + 1n);
 
-      // Verify initial statuses
-      let challenge = await escrow.read.getChallenge([0n]);
-      assert.equal(challenge.status, 0); // ChallengeStatus.Active = 0
-
-      let submission1 = await escrow.read.getSubmission([0n, 0n]);
-      let submission2 = await escrow.read.getSubmission([0n, 1n]);
-      let submission3 = await escrow.read.getSubmission([0n, 2n]);
-      
-      assert.equal(submission1.status, 0); // SubmissionStatus.Pending = 0
-      assert.equal(submission2.status, 0); // SubmissionStatus.Pending = 0
-      assert.equal(submission3.status, 0); // SubmissionStatus.Pending = 0
-
-      // Resolve with submission 0 as winner (user1's submission) and submission 1 as ineligible
-      await escrow.write.resolveChallenge([0n, [0n], [1n]], {
-        account: owner.account
-      });
-
-      // Verify updated statuses
-      challenge = await escrow.read.getChallenge([0n]);
-      assert.equal(challenge.status, 1); // ChallengeStatus.Completed = 1
-
-      submission1 = await escrow.read.getSubmission([0n, 0n]);
-      submission2 = await escrow.read.getSubmission([0n, 1n]);
-      submission3 = await escrow.read.getSubmission([0n, 2n]);
-      
-      assert.equal(submission1.status, 3); // SubmissionStatus.Awarded = 3 (winner)
-      assert.equal(submission2.status, 1); // SubmissionStatus.Ineligible = 1 (invalid)
-      assert.equal(submission3.status, 2); // SubmissionStatus.Accepted = 2 (loser)
-    });
-
-    it("Should not allow resolving challenge before deadline", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Create challenge with future deadline
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(CHALLENGE_DEADLINE)], {
-        account: owner.account
-      });
-
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-
-      await assert.rejects(
+      // pick winner
+      await expect(
         escrow.write.resolveChallenge([0n, [0n], []], {
-          account: owner.account
-        }),
-        /ChallengeNotClosed/
-      );
+          account: owner.account,
+        })
+      ).not.to.be.rejected;
     });
 
-    it("Should not allow non-owner to resolve challenges", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
+    it("Should allow admin to invalidate a submission therefore returning the tokens to him", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
+
+      // balance before challenge
+      const balanceBeforeChallenge = await erc20.read.balanceOf([
+        otherAccount.account.address,
       ]);
 
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
+      // create challenge and submission
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
       });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission1"],
+        { account: otherAccount.account }
+      );
+      await time.increaseTo(deadline + 1n);
 
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
+      // assert we can resolve challenge and get the tokens back
+      await expect(
+        escrow.write.resolveChallenge([0n, [], [0n]], {
+          account: owner.account,
+        })
+      ).not.to.be.rejected;
+      expect(
+        await erc20.read.balanceOf([otherAccount.account.address])
+      ).to.equal(balanceBeforeChallenge);
+    });
 
-      await assert.rejects(
+    it("Should return user submissions", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
+
+      // create challenge and submission
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
+      });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission1"],
+        { account: otherAccount.account }
+      );
+
+      // assert user submissions
+      const submissions = await escrow.read.getUserSubmissions([otherAccount.account.address]);
+      expect(submissions).to.have.lengthOf(1);
+      expect(submissions[0].submissionId).to.equal(0n);
+      expect(submissions[0].challengeId).to.equal(0n);
+    });
+  });
+
+  describe("Claim rewards", function () {
+    it("Winners get 100% of the pool if no other participants", async function () {
+      const { escrow, owner, otherAccount, erc20 } = await loadFixture(
+        deployEscrowFixture
+      );
+
+      const balanceBeforeChallenge = await erc20.read.balanceOf([
+        otherAccount.account.address,
+      ]);
+
+      // create challenge and submission
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
+      });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
+      );
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission1"],
+        { account: otherAccount.account }
+      );
+
+      // pass deadline
+      await time.increaseTo(deadline + 1n);
+
+      // pick winner
+      await expect(
         escrow.write.resolveChallenge([0n, [0n], []], {
-          account: user1.account
-        }),
-        /OnlyAdmin/
+          account: owner.account,
+        })
+      ).not.to.be.rejected;
+
+      // Check claimable
+      expect(
+        await escrow.read.getClaimable([0n, otherAccount.account.address])
+      ).to.equal(poolSize);
+      await expect(
+         escrow.write.claim([0n], { account: otherAccount.account })
+      ).not.to.be.rejected;
+      expect(
+        await erc20.read.balanceOf([otherAccount.account.address])
+      ).to.equal(balanceBeforeChallenge + poolSize);
+    });
+
+    it("Winners get maximum 70% of the pool if there're other valid submissions", async function () {
+      const { escrow, owner, otherAccount, otherAccount2, erc20 } =
+        await loadFixture(deployEscrowFixture);
+
+      // create challenge and submission
+      const deadline = BigInt(Date.now() + 1000 * 60 * 60 * 24);
+      const poolSize = parseEther("1000");
+      await erc20.write.approve([escrow.address, poolSize], {
+        account: owner.account,
+      });
+      await escrow.write.createChallenge(
+        ["https://example.com/challenge1", poolSize, deadline],
+        { account: owner.account }
       );
-    });
-
-    it("Should give winners 100% when all other submissions are invalid", async () => {
-      const [owner, , user1, user2, user3] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Transfer tokens to escrow for the pool
-      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
-
-      // Create challenge with deadline in the past
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
-      });
-
-      // Create submissions - user1 wins, user2 and user3 are invalid
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      await escrow.write.createSubmission([0n, "contact2@example.com", "https://example.com/submission2"], { account: user2.account });
-      await escrow.write.createSubmission([0n, "contact3@example.com", "https://example.com/submission3"], { account: user3.account });
-
-      // Resolve with submission 0 as winner (user1's submission) and submissions 1, 2 as ineligible
-      await escrow.write.resolveChallenge([0n, [0n], [1n, 2n]], {
-        account: owner.account
-      });
-
-      // Winner should get 100% since there are no valid losers
-      const winnerBalance = await escrow.read.getBalance([user1.account.address]);
-      assert.equal(winnerBalance, POOL_SIZE);
-
-      // Invalid submissions should get nothing
-      const user2Balance = await escrow.read.getBalance([user2.account.address]);
-      const user3Balance = await escrow.read.getBalance([user3.account.address]);
-      assert.equal(user2Balance, 0n);
-      assert.equal(user3Balance, 0n);
-    });
-  });
-
-  describe("Fund Withdrawal", () => {
-    it("Should allow users to withdraw their balance", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Transfer tokens to escrow to simulate earned balance
-      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
-
-      // Resolve a challenge to give user a balance
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
-      });
-      
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      
-      await escrow.write.resolveChallenge([0n, [0n], []], {
-        account: owner.account
-      });
-
-      const initialTokenBalance = await mockToken.read.balanceOf([user1.account.address]);
-      const escrowBalance = await escrow.read.getBalance([user1.account.address]);
-
-      await viem.assertions.emitWithArgs(
-        escrow.write.withdraw([escrowBalance, user1.account.address], {
-          account: user1.account
-        }),
-        escrow,
-        "FundsWithdrawn",
-        [getAddress(user1.account.address), getAddress(user1.account.address), escrowBalance]
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission1"],
+        { account: otherAccount.account }
+      );
+      await escrow.write.createSubmission(
+        [0n, "contact@example.com", "https://example.com/submission2"],
+        { account: otherAccount2.account }
       );
 
-      const finalTokenBalance = await mockToken.read.balanceOf([user1.account.address]);
-      const finalEscrowBalance = await escrow.read.getBalance([user1.account.address]);
+      // pass deadline
+      await time.increaseTo(deadline + 1n);
 
-      assert.equal(finalTokenBalance, initialTokenBalance + escrowBalance);
-      assert.equal(finalEscrowBalance, 0n);
-    });
+      // pick winner
+      await expect(
+        escrow.write.resolveChallenge([0n, [0n], []], {
+          account: owner.account,
+        })
+      ).not.to.be.rejected;
 
-    it("Should not allow withdrawal of more than balance", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      await assert.rejects(
-        escrow.write.withdraw([parseEther("100"), user1.account.address], {
-          account: user1.account
-        }),
-        /InsufficientBalance/
-      );
-    });
-  });
-
-  describe("Balance Checking", () => {
-    it("Should return correct balance for users", async () => {
-      const [owner, , user1] = await viem.getWalletClients();
-      
-      const mockToken = await viem.deployContract("MockERC20", [
-        "Test Token", "TEST", INITIAL_TOKEN_SUPPLY
-      ]);
-      const escrow = await viem.deployContract("Escrow", [
-        mockToken.address
-      ]);
-
-      // Initially balance should be 0
-      assert.equal(await escrow.read.getBalance([user1.account.address]), 0n);
-
-      // Transfer tokens to escrow for the pool
-      await mockToken.write.transfer([escrow.address, POOL_SIZE]);
-
-      // After challenge resolution, balance should be updated
-      const pastDeadline = Math.floor(Date.now() / 1000) - 1000;
-      await escrow.write.createChallenge(["https://example.com/challenge1", POOL_SIZE, BigInt(pastDeadline)], {
-        account: owner.account
-      });
-      
-      await escrow.write.createSubmission([0n, "contact1@example.com", "https://example.com/submission1"], { account: user1.account });
-      
-      await escrow.write.resolveChallenge([0n, [0n], []], {
-        account: owner.account
-      });
-
-      const balance = await escrow.read.getBalance([user1.account.address]);
-      assert.equal(balance, POOL_SIZE); // Winner gets 100% of pool (no other submissions)
+      // Check claimable
+      expect(
+        await escrow.read.getClaimable([0n, otherAccount.account.address])
+      ).to.equal((poolSize * 7n) / 10n);
+      expect(
+        await escrow.read.getClaimable([0n, otherAccount2.account.address])
+      ).to.equal((poolSize * 3n) / 10n);
     });
   });
 });

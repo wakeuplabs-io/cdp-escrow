@@ -54,4 +54,34 @@ interface IEscrowErrors {
      * @dev Prevents users from performing actions that require them to be the admin of the challenge
      */
     error OnlyAdmin();
+
+    /**
+     * @notice Thrown when a user attempts to get a submission id that doesn't exist
+     * @dev Prevents users from getting a submission id that doesn't exist
+     */
+    error SubmissionNotFound();
+
+    /**
+     * @notice Thrown when a user attempts to perform an action that requires a challenge to be active
+     * @dev Prevents users from performing actions that require a challenge to be active
+     */
+    error ChallengeNotActive();
+
+    /**
+     * @notice Thrown when a user attempts to submit to a challenge they are the admin of
+     * @dev Prevents users from submitting to a challenge they are the admin of
+     */
+    error AdminCannotSubmit();
+
+    /**
+     * @notice Thrown when a user attempts to resolve a challenge that has already been resolved
+     * @dev Prevents users from resolving a challenge that has already been resolved
+     */
+    error ChallengeAlreadyResolved();
+
+    /**
+     * @notice Thrown when a user attempts to resolve a challenge with an invalid submission count
+     * @dev Prevents users from resolving a challenge with an invalid submission count
+     */
+    error InvalidSubmissionCount();
 }

@@ -1,6 +1,6 @@
-import { configByNetwork, ipfsClient } from "../../../config.js";
+import { configByNetwork, ipfsClient } from "../../../config";
 import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { EscrowService } from "@cdp/common/src/services/escrow";
 
 export const getSubmissionByIdCommand = new Command("find-submission")
   .description("Get a submission by ID")

@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { parseEther } from "viem";
-import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../config.js";
+import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../config";
 import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { EscrowService } from "@cdp/common/src/services/escrow";
 import { privateKeyToAccount } from "viem/accounts";
 
 export const withdrawCommand = new Command("withdraw")
@@ -25,8 +25,7 @@ export const withdrawCommand = new Command("withdraw")
 
     console.log(`⚡ Withdrawing tokens...`);
     const withdrawTx = await escrowService.prepareWithdraw(
-      parseEther(options.amount),
-      options.to
+      { amount: parseEther(options.amount), to: options.to }
     );
     const withdrawTxHash = await walletClient.sendTransaction({
       ...withdrawTx,

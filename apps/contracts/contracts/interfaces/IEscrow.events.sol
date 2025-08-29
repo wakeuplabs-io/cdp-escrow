@@ -21,18 +21,10 @@ interface IEscrowEvents {
     /**
      * @notice Emitted when a challenge is resolved and rewards are distributed
      * @param challengeId The unique identifier of the resolved challenge
-     * @param winners Array of addresses that won the challenge
+     * @param awardedSubmissions Array of submission IDs that were awarded
+     * @param ineligibleSubmissions Array of submission IDs that were ineligible
      */
-    event ChallengeResolved(uint256 challengeId, address[] winners);
-
-    /**
-     * @notice Emitted when funds are withdrawn from a specific challenge
-     * @param challengeId The challenge from which funds were withdrawn
-     * @param user The address that withdrew the funds
-     * @param amount The amount of tokens withdrawn
-     * @dev This event is currently defined but not used in the current implementation
-     */
-    event ChallengeFundsWithdrawn(uint256 challengeId, address user, uint256 amount);
+    event ChallengeResolved(uint256 challengeId, uint256[] awardedSubmissions, uint256[] ineligibleSubmissions);
 
     /**
      * @notice Emitted when a user submits their work for a challenge
@@ -44,9 +36,8 @@ interface IEscrowEvents {
 
     /**
      * @notice Emitted when a user withdraws their earned rewards
-     * @param from The address that withdrew the funds
-     * @param to The address that received the funds
+     * @param user The address that withdrew the funds
      * @param amount The amount of tokens withdrawn
      */
-    event FundsWithdrawn(address from, address to, uint256 amount);
+    event Claimed(address user, uint256 amount);
 }

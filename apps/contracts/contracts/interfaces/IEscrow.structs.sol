@@ -11,6 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IEscrowStructs {
     enum ChallengeStatus {
         Active,
+        PendingReview,
         Completed
     }
 
@@ -50,5 +51,15 @@ interface IEscrowStructs {
         string creatorContact;
         SubmissionStatus status;
         uint256 createdAt;
+    }
+
+    /**
+     * @notice User submission data structure containing information about a user's submission to a challenge
+     * @param challengeId The id of the challenge
+     * @param submissionId The id of the submission
+     */
+    struct UserSubmission {
+        uint256 challengeId;
+        uint256 submissionId;
     }
 }

@@ -1,6 +1,6 @@
-import { configByNetwork, ipfsClient } from "../../../config.js";
+import { configByNetwork, ipfsClient } from "../../../config";
 import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { EscrowService } from "@cdp/common/src/services/escrow";
 
 export const findChallengeByIdCommand = new Command("find-challenge")
   .description("Get a challenge by ID")

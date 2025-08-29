@@ -1,14 +1,14 @@
+import { EscrowService } from "@cdp/common/src/services/escrow";
+import { Command } from "commander";
 import "dotenv/config";
 import { parseEther } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import {
   configByNetwork,
   ipfsClient,
   publicClientByNetwork,
   walletClientByNetwork,
-} from "../../../config.js";
-import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
-import { privateKeyToAccount } from "viem/accounts";
+} from "../../../config";
 
 export const createChallengeCommand = new Command("create-challenge")
   .description("Create a challenge")
@@ -34,7 +34,7 @@ export const createChallengeCommand = new Command("create-challenge")
     // approve the escrow to spend the tokens
     console.log("⚡ Approving escrow to spend tokens...");
     const approveTx = await escrowService.prepareApprove(
-      parseEther(options.poolSize)
+      { amount: parseEther(options.poolSize) }
     );
     const approveTxHash = await walletClient.sendTransaction({
       ...approveTx,

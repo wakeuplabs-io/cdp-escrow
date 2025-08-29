@@ -1,14 +1,14 @@
 import "dotenv/config";
 import { Command } from "commander";
-import { mintCommand } from "./commands/mint.js";
-import { withdrawCommand } from "./commands/withdraw.js";
-import { createChallengeCommand } from "./commands/challenges/create.js";
-import { resolveChallengeCommand } from "./commands/challenges/resolve.js";
-import { findChallengeByIdCommand } from "./commands/challenges/find.js";
-import { findChallengesCommand } from "./commands/challenges/find-paginated.js";
-import { createSubmissionCommand } from "./commands/submissions/create.js";
-import { getSubmissionByIdCommand } from "./commands/submissions/find.js";
-import { getSubmissionsPaginatedCommand } from "./commands/submissions/find-paginated.js";
+import { mintCommand } from "./commands/mint";
+import { withdrawCommand } from "./commands/withdraw";
+import { createChallengeCommand } from "./commands/challenges/create";
+import { resolveChallengeCommand } from "./commands/challenges/resolve";
+import { findChallengeByIdCommand } from "./commands/challenges/find";
+import { findChallengesCommand } from "./commands/challenges/find-paginated";
+import { createSubmissionCommand } from "./commands/submissions/create";
+import { getSubmissionByIdCommand } from "./commands/submissions/find";
+import { getSubmissionsPaginatedCommand } from "./commands/submissions/find-paginated";
 
 const program = new Command();
 

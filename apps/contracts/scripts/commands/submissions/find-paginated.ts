@@ -1,6 +1,6 @@
-import { configByNetwork, ipfsClient } from "../../../config.js";
+import { configByNetwork, ipfsClient } from "../../../config";
 import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { EscrowService } from "@cdp/common/src/services/escrow";
 
 export const getSubmissionsPaginatedCommand = new Command("find-submissions")
   .description("Get submissions paginated")

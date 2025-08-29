@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config.js";
+import { configByNetwork, ipfsClient, walletClientByNetwork } from "../../../config";
 import { Command } from "commander";
-import { EscrowService } from "@cdp/common/src/services/escrow.js";
+import { EscrowService } from "@cdp/common/src/services/escrow";
 import { privateKeyToAccount } from "viem/accounts";
 
 export const createSubmissionCommand = new Command("create-submission")
@@ -26,9 +26,11 @@ export const createSubmissionCommand = new Command("create-submission")
     // Create submission
     console.log("⚡ Creating submission...");
     const createTx = await escrowService.prepareCreateSubmission(
-      BigInt(options.challengeId),
-      options.contact,
-      options.body
+      {
+        challengeId: BigInt(options.challengeId),
+        contact: options.contact,
+        description: options.body,
+      }
     );
     const createTxHash = await walletClient.sendTransaction({
       ...createTx,
