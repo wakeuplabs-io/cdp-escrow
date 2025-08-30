@@ -41,7 +41,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [description, contact, createSubmission, router]);
+  }, [id, description, contact, createSubmission, router]);
 
   const validation = useMemo(() => {
     if (!contact) {

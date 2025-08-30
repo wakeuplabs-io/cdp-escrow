@@ -1,23 +1,21 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { SendHorizontalIcon } from "lucide-react";
-import Markdown from "react-markdown";
-import { useState, useMemo } from "react";
-import { useCallback } from "react";
 import { BackButton } from "@/components/back-button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { ChevronDownIcon } from "lucide-react";
-import { toast } from "sonner";
-import { Tooltip } from "react-tooltip";
-import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
 import { useCreateChallenge } from "@/hooks/challenges";
+import { cn } from "@/lib/utils";
+import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
+import { ChevronDownIcon, SendHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import Markdown from "react-markdown";
+import { Tooltip } from "react-tooltip";
+import { toast } from "sonner";
 import { parseEther } from "viem";
 
 export default function CreateChallengePage() {
@@ -49,7 +47,7 @@ export default function CreateChallengePage() {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [title, description, endsAt, createChallenge, router]);
+  }, [title, description, endsAt, createChallenge, router, poolSize]);
 
   const validation = useMemo(() => {
     if (Number(poolSize) < 1) {

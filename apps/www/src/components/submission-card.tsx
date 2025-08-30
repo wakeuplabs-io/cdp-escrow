@@ -1,6 +1,7 @@
 import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import { EllipsisVerticalIcon } from "lucide-react";
+import Image from "next/image";
 import Markdown from "react-markdown";
 import {
   DropdownMenu,
@@ -30,7 +31,7 @@ export const SubmissionCard = ({
     <div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
+          <Image
             src="/avatar.webp"
             alt="avatar"
             className="w-[32px] h-[32px] rounded-full"
