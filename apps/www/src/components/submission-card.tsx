@@ -6,6 +6,7 @@ import {
   EllipsisVerticalIcon,
   TrophyIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Markdown from "react-markdown";
 import { Tooltip } from "react-tooltip";
 import {
@@ -36,7 +37,7 @@ export const SubmissionCard = ({
     <div className="w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
+          <Image
             src="/avatar.webp"
             alt="avatar"
             className="w-[32px] h-[32px] rounded-full"

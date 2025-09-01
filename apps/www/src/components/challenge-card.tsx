@@ -1,9 +1,9 @@
 import { shortenAddress } from "@/lib/utils";
-import { useMemo } from "react";
-import { StatusIcon } from "./status-badge";
+import { Challenge } from "@cdp/common/src/types/challenge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { Challenge } from "@cdp/common/src/types/challenge";
+import { useMemo } from "react";
+import { StatusIcon } from "./status-badge";
 
 export const ChallengeCard: React.FC<{
   challenge: Challenge;
@@ -14,7 +14,7 @@ export const ChallengeCard: React.FC<{
       return formatDistanceToNow(new Date(challenge.endsAt)) + " left";
     }
     return formatDistanceToNow(challenge.endsAt) + " ago";
-  }, [challenge.endsAt]);
+  }, [challenge.endsAt, challenge.status]);
 
   return (
     <div className="flex items-center justify-between w-full gap-2 py-[14px]">

@@ -25,6 +25,7 @@ import {
   QrCodeIcon,
   XIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { formatUnits } from "viem";
 
@@ -143,7 +144,7 @@ export const AccountManager = () => {
         content: <Receive />,
       },
     } as const;
-  }, [balance, evmAddress, onrampAmount, setOnrampAmount]);
+  }, [balance, evmAddress, onrampAmount, setOnrampAmount, signOut]);
 
   return (
     <>
@@ -152,7 +153,7 @@ export const AccountManager = () => {
           onClick={() => setIsOpen(true)}
           className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0"
         >
-          <img
+          <Image
             src="/avatar.webp"
             alt="avatar"
             className="w-[18px] h-[18px] rounded-full"

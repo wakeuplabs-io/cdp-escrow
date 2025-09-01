@@ -49,7 +49,7 @@ export default function CreateChallengePage() {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [title, description, endsAt, createChallenge, router]);
+  }, [title, description, endsAt, createChallenge, router, poolSize]);
 
   const validation = useMemo(() => {
     if (Number(poolSize) < 1) {

@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     try {
       data = JSON.parse(responseText);
     } catch (error) {
-      console.error('Failed to parse response:', responseText);
+      console.error('Failed to parse response:', responseText, error);
       return NextResponse.json(
         {
           error: 'Invalid response from CDP API',

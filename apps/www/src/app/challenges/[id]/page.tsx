@@ -79,7 +79,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       );
       setWinners(winners.filter((winner) => winner !== submission.creator));
     },
-    [ineligible]
+    [ineligible, winners]
   );
 
   // infinite scroll
@@ -105,7 +105,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       return formatDistanceToNow(new Date(challenge.endsAt)) + " left";
     }
     return formatDistanceToNow(challenge.endsAt) + " ago";
-  }, [challenge?.endsAt, challenge?.status]);
+  }, [challenge]);
 
   const sortedSubmissions = useMemo(() => {
     if (!submissions) return [];
