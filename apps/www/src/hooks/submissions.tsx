@@ -86,6 +86,8 @@ export const useCreateSubmission = () => {
         calls: [await escrowService.prepareCreateSubmission(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
+      
+      // TODO: invalidate  queries
 
       return result.userOperationHash;
     },

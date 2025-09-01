@@ -1,12 +1,13 @@
 import {
   Address,
-  PublicClient,
   createPublicClient,
   decodeEventLog,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
   http,
+  Log,
+  PublicClient,
 } from "viem";
 import { escrowAbi } from "../abis/escrow";
 import { Challenge } from "../types/challenge";
@@ -214,18 +215,13 @@ export class EscrowService {
     };
   }
 
-  async recoverChallengeId(txHash: `0x${string}`): Promise<bigint> {
-    // extract challenge id from the transaction receipt
-    const receipt = await this.publicClient.waitForTransactionReceipt({
-      hash: txHash,
-    });
-
+  async recoverChallengeId(logs: Log[]): Promise<bigint> {
     // Find and decode the matching log
     const [challengeCreatedTopic] = encodeEventTopics({
       abi: escrowAbi,
       eventName: "ChallengeCreated",
     });
-    const log = receipt.logs.find(
+    const log = logs.find(
       (log) => log.topics[0] === challengeCreatedTopic
     );
     if (!log) throw new Error("Log not found");

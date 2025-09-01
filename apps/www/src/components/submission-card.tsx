@@ -1,7 +1,13 @@
 import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
-import { EllipsisVerticalIcon } from "lucide-react";
+import {
+  BanIcon,
+  CheckIcon,
+  EllipsisVerticalIcon,
+  TrophyIcon,
+} from "lucide-react";
 import Markdown from "react-markdown";
+import { Tooltip } from "react-tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +33,7 @@ export const SubmissionCard = ({
   onMarkAsAcceptable: () => void;
 }) => {
   return (
-    <div>
+    <div className="w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
@@ -39,8 +45,9 @@ export const SubmissionCard = ({
             <div className="flex items-center gap-2">
               <span>{shortenAddress(submission.creator)}</span>
               <span
+                data-tooltip-id="submission-status-tooltip"
                 className={cn(
-                  "text-xs rounded-full px-2 py-0.5 text-white font-medium",
+                  "text-xs rounded-full px-1.5 py-0.5 text-white font-medium",
                   isWinner
                     ? "bg-green-500"
                     : isIneligible
@@ -48,12 +55,25 @@ export const SubmissionCard = ({
                     : "bg-yellow-500"
                 )}
               >
-                {isWinner
-                  ? "winner"
-                  : isIneligible
-                  ? "ineligible"
-                  : "acceptable"}
+                {isWinner ? (
+                  <TrophyIcon className="w-3 h-3" />
+                ) : isIneligible ? (
+                  <BanIcon className="w-3 h-3" />
+                ) : (
+                  <CheckIcon className="w-3 h-3" />
+                )}
               </span>
+
+              <Tooltip
+                id="submission-status-tooltip"
+                content={
+                  isWinner
+                    ? "Winner"
+                    : isIneligible
+                    ? "Ineligible"
+                    : "Acceptable"
+                }
+              />
             </div>
             <div className="text-xs text-muted-foreground space-x-2">
               {submission.createdAt.toLocaleDateString()} · #{submission.id}
@@ -87,7 +107,7 @@ export const SubmissionCard = ({
         </div>
       </div>
 
-      <div className="prose prose-sm py-4">
+      <div className="prose prose-sm max-w-2xl py-4">
         <Markdown>{submission.metadata.description}</Markdown>
       </div>
     </div>

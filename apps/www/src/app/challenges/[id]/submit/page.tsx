@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountManager } from "@/components/account-manager/account-manager";
 import { BackButton } from "@/components/back-button";
 import { useChallenge } from "@/hooks/challenges";
 import { useCreateSubmission } from "@/hooks/submissions";
@@ -76,22 +77,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <BackButton to="/" />
 
-        <button
-          disabled={!validation.isValid || isCreatingSubmission}
-          onClick={onCreateSubmission}
-          className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          data-tooltip-id="error-tooltip"
-        >
-          <span>{isCreatingSubmission ? "Creating..." : "Submit"}</span>
-          <SendHorizontalIcon className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <AccountManager />
 
-        {!validation.isValid && (
-          <Tooltip id="error-tooltip" content={errorMessage} />
-        )}
+          <button
+            disabled={!validation.isValid || isCreatingSubmission}
+            onClick={onCreateSubmission}
+            className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            data-tooltip-id="error-tooltip"
+          >
+            <span>{isCreatingSubmission ? "Creating..." : "Submit"}</span>
+            <SendHorizontalIcon className="w-4 h-4" />
+          </button>
+
+          {!validation.isValid && (
+            <Tooltip id="error-tooltip" content={errorMessage} />
+          )}
+        </div>
       </div>
 
-      <div className="flex divide-x min-h-screen">
+      <div className="flex min-h-screen max-w-2xl mx-auto">
         <div className="p-6 pb-20 w-full">
           {/* Title input */}
           <div className="bg-muted p-4 rounded-lg relative mb-4">

@@ -1,11 +1,23 @@
 "use client";
 
+import { Onramp } from "@/components/account-manager/onramp";
+import { Receive } from "@/components/account-manager/receive";
+import { Withdraw } from "@/components/account-manager/withdraw";
+import { Address } from "@/components/address";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TOKEN_DECIMALS } from "@/config";
 import { useBalance } from "@/hooks/balance";
 import { shortenAddress } from "@/lib/utils";
 import { useEvmAddress, useIsSignedIn, useSignOut } from "@coinbase/cdp-hooks";
 import { AuthButton } from "@coinbase/cdp-react/components/AuthButton";
 import {
-  AlertCircleIcon,
   ArrowDownIcon,
   ArrowLeftIcon,
   ArrowUpIcon,
@@ -14,18 +26,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import QRCode from "react-qr-code";
-import { Address } from "./address";
-import { Alert, AlertTitle } from "./ui/alert";
-import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
+import { formatUnits } from "viem";
 
 enum Tab {
   Account = "account",
@@ -52,14 +53,12 @@ export const AccountManager = () => {
         description: "Your account address is ready to be used.",
         content: (
           <>
-            {evmAddress && (
-              <Address
-                address={evmAddress}
-                balance={balance}
-                balanceLabel="USDC"
-                className="mb-6"
-              />
-            )}
+            <Address
+              address={evmAddress ?? ""}
+              balance={balance}
+              balanceLabel="USDC"
+              className="mb-6"
+            />
 
             <div className="flex flex-col gap-2">
               <Button
@@ -83,7 +82,11 @@ export const AccountManager = () => {
               </Button>
 
               <Button
-                onClick={() => signOut()}
+                onClick={() => {
+                  signOut().then(() => {
+                    setIsOpen(false);
+                  });
+                }}
                 className="w-full text-destructive justify-start text-sm"
                 size="lg"
                 variant="outline"
@@ -92,47 +95,6 @@ export const AccountManager = () => {
                 Sign out
               </Button>
             </div>
-          </>
-        ),
-      },
-      [Tab.Withdraw]: {
-        title: "Withdraw funds from your wallet",
-        description: "Withdraw your rewards to your wallet",
-        content: (
-          <>
-            {evmAddress && (
-              <Address
-                label="From"
-                address={evmAddress}
-                balance={balance}
-                balanceLabel="USDC"
-                className="mb-2"
-              />
-            )}
-
-            <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-2">
-              <span className="text-xs text-muted-foreground absolute left-4 top-1">
-                To
-              </span>
-              <input
-                className="text-sm text-muted-foreground outline-none w-full"
-                placeholder="0x..."
-              />
-            </div>
-
-            <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-6">
-              <span className="text-xs text-muted-foreground absolute left-4 top-1">
-                Amount
-              </span>
-              <input
-                className="text-sm text-muted-foreground outline-none w-full"
-                placeholder="0.1"
-              />
-            </div>
-
-            <Button className="w-full" size="lg" variant="outline">
-              Withdraw
-            </Button>
           </>
         ),
       },
@@ -165,66 +127,20 @@ export const AccountManager = () => {
           </>
         ),
       },
+      [Tab.Withdraw]: {
+        title: "Withdraw funds from your wallet",
+        description: "Withdraw your rewards to your wallet",
+        content: <Withdraw />,
+      },
       [Tab.Onramp]: {
         title: "Onramp USDC",
         description: "Onramp USDC to your wallet",
-        content: (
-          <div className="flex flex-col gap-4">
-            <Input
-              placeholder="Amount"
-              value={onrampAmount}
-              onChange={e => setOnrampAmount(e.target.value)}
-            />
-
-            <Button
-              className="w-full"
-              onClick={async () => {
-                const { token } = await fetch("/api/session", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    addresses: [{ address: evmAddress, blockchains: ["base"] }],
-                    assets: ["USDC"],
-                  }),
-                }).then((res) => res.json());
-                // TODO: base url as env variable
-                window.open(
-                  `https://pay-sandbox.coinbase.com/buy?assets=USDC&defaultAsset=USDC&fiatCurrency=USD&presetCryptoAmount=${onrampAmount}&sessionToken=${token}`,
-                  "Onramp",
-                  "width=500,height=800,scrollbars=no,resizable=no"
-                );
-              }}
-            >
-              Onramp
-            </Button>
-          </div>
-        ),
+        content: <Onramp />,
       },
       [Tab.Receive]: {
         title: "Receive USDC",
         description: "Receive USDC to your wallet",
-        content: (
-          <div className="flex flex-col gap-4">
-            <QRCode
-              className="h-40 w-40 mx-auto"
-              value="0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0"
-            />
-
-            <Alert variant="default" className="bg-[#FFF5E6] border-none">
-              <AlertCircleIcon color="blue" />
-              <AlertTitle className="text-sm font-normal">
-                Make sure to send USDC on Base
-              </AlertTitle>
-            </Alert>
-
-            {evmAddress && (
-              <Address
-                address={evmAddress}
-                balance={balance}
-                balanceLabel="USDC"
-              />
-            )}
-          </div>
-        ),
+        content: <Receive />,
       },
     } as const;
   }, [balance, evmAddress, onrampAmount, setOnrampAmount]);
@@ -242,9 +158,11 @@ export const AccountManager = () => {
             className="w-[18px] h-[18px] rounded-full"
           />
           <span className="text-sm">
-            {shortenAddress(evmAddress ?? "0x123456789")}
+            {shortenAddress(evmAddress ?? "")}
           </span>
-          <span className="text-xs text-muted-foreground">0 USDC</span>
+          <span className="text-xs text-muted-foreground">
+            {formatUnits(balance ?? 0n, TOKEN_DECIMALS)} USDC
+          </span>
         </button>
       ) : (
         <AuthButton

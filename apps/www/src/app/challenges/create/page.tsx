@@ -1,24 +1,24 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { SendHorizontalIcon } from "lucide-react";
-import Markdown from "react-markdown";
-import { useState, useMemo } from "react";
-import { useCallback } from "react";
+import { AccountManager } from "@/components/account-manager/account-manager";
 import { BackButton } from "@/components/back-button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { ChevronDownIcon } from "lucide-react";
-import { toast } from "sonner";
-import { Tooltip } from "react-tooltip";
-import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
+import { TOKEN_DECIMALS } from "@/config";
 import { useCreateChallenge } from "@/hooks/challenges";
+import { cn } from "@/lib/utils";
+import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
+import { ChevronDownIcon, SendHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parseEther } from "viem";
+import { useCallback, useMemo, useState } from "react";
+import Markdown from "react-markdown";
+import { Tooltip } from "react-tooltip";
+import { toast } from "sonner";
+import { parseUnits } from "viem";
 
 export default function CreateChallengePage() {
   const [title, setTitle] = useState("");
@@ -39,7 +39,7 @@ export default function CreateChallengePage() {
       const challengeId = await createChallenge({
         title,
         description,
-        poolSize: parseEther(poolSize),
+        poolSize: parseUnits(poolSize, TOKEN_DECIMALS),
         endDate: endsAt,
       });
       router.push(`/challenges/${challengeId}`);
@@ -83,22 +83,26 @@ export default function CreateChallengePage() {
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <BackButton to="/" />
 
-        <button
-          disabled={!validation.isValid || isCreatingChallenge}
-          onClick={onCreateChallenge}
-          className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          data-tooltip-id="error-tooltip"
-        >
-          <span>{isCreatingChallenge ? "Creating..." : "Publish"}</span>
-          <SendHorizontalIcon className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <AccountManager />
 
-        {!validation.isValid && (
-          <Tooltip id="error-tooltip" content={errorMessage} />
-        )}
+          <button
+            disabled={!validation.isValid || isCreatingChallenge}
+            onClick={onCreateChallenge}
+            className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            data-tooltip-id="error-tooltip"
+          >
+            <span>{isCreatingChallenge ? "Creating..." : "Publish"}</span>
+            <SendHorizontalIcon className="w-4 h-4" />
+          </button>
+
+          {!validation.isValid && (
+            <Tooltip id="error-tooltip" content={errorMessage} />
+          )}
+        </div>
       </div>
 
-      <div className="flex divide-x min-h-screen">
+      <div className="flex min-h-screen max-w-4xl mx-auto">
         <div className="p-6 pb-20 w-full">
           {/* Title input */}
           <div className="bg-muted p-4 rounded-lg relative mb-4">
@@ -210,7 +214,7 @@ export default function CreateChallengePage() {
 
             {preview ? (
               <div className="w-full border rounded-lg p-10">
-                <div className="prose">
+                <div className="prose prose-sm max-w-2xl">
                   <Markdown>{description}</Markdown>
                 </div>
               </div>

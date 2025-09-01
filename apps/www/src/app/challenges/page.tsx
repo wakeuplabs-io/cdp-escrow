@@ -1,19 +1,18 @@
 "use client";
 
+import { AccountManager } from "@/components/account-manager/account-manager";
+import { ChallengeCard } from "@/components/challenge-card";
+import { useChallenges } from "@/hooks/challenges";
+import { useIsSignedIn } from "@coinbase/cdp-hooks";
 import { AudioWaveformIcon, PenBoxIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import { Tooltip } from "react-tooltip";
-import { useChallenges } from "@/hooks/challenges";
-import { AccountManager } from "@/components/account-manager";
-import Link from "next/link";
-import { useIsSignedIn } from "@coinbase/cdp-hooks";
-import { ChallengeCard } from "@/components/challenge-card";
 
 export default function ChallengesPage() {
   const { isSignedIn } = useIsSignedIn();
   const loadMoreRef = useRef(null);
-  const { data, fetchNextPage, hasNextPage, isPending } =
-    useChallenges();
+  const { data, fetchNextPage, hasNextPage, isPending } = useChallenges();
 
   const sortedChallenges = useMemo(() => {
     return (
@@ -48,21 +47,7 @@ export default function ChallengesPage() {
         <AccountManager />
       </div>
 
-      <div className="p-6 flex items-center justify-between">
-        <div className="relative">
-          <label htmlFor="filter" className="text-sm text-muted-foreground absolute left-5 top-0 bg-background -translate-y-1/2 px-1">
-            Admined by
-          </label>
-
-          <select
-            id="filter"
-            className="rounded-full outline-none border min-w-[150px] h-[46px] px-5 shrink-0 appearance-none"
-          >
-            <option value="all">All</option>
-            <option value="mine">Me</option>
-          </select>
-        </div>
-
+      <div className="p-6 flex items-center justify-end">
         <Link
           href="/challenges/create"
           className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center"
@@ -70,6 +55,7 @@ export default function ChallengesPage() {
         >
           <PenBoxIcon className="h-4 w-4" />
         </Link>
+        
         {!isSignedIn && (
           <Tooltip
             id="new-proposal-tooltip"

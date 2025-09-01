@@ -1,9 +1,10 @@
 import { Erc20Service } from "@cdp/common/src/services/erc20";
 import { EscrowService } from "@cdp/common/src/services/escrow";
 import { PinataIpfs } from "@cdp/common/src/services/ipfs";
-import { Address } from "viem";
+import { Address, createPublicClient, http } from "viem";
+import { createBundlerClient } from "viem/account-abstraction";
 
-export const TOKEN_DECIMALS = 6;
+export const TOKEN_DECIMALS = 18;
 
 export const ipfsClient = new PinataIpfs(
   process.env.NEXT_PUBLIC_PINATA_JWT as string,
@@ -23,3 +24,9 @@ export const erc20Service = new Erc20Service(
   process.env.NEXT_PUBLIC_RPC_URL as string
 );
 
+export const bundlerClient = createBundlerClient({
+  client: createPublicClient({
+    transport: http(process.env.NEXT_PUBLIC_RPC_URL as string), 
+  }),
+  transport: http(process.env.NEXT_PUBLIC_CDP_BUNDLER_URL as string), 
+});

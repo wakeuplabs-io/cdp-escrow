@@ -1,6 +1,6 @@
 "use client";
 
-import { AccountManager } from "@/components/account-manager";
+import { AccountManager } from "@/components/account-manager/account-manager";
 import { ClaimButton } from "@/components/claim-button";
 import { ResolveButton } from "@/components/resolve-button";
 import { StatusBadge } from "@/components/status-badge";
@@ -8,7 +8,7 @@ import { SubmissionCard } from "@/components/submission-card";
 import { SubmitButton } from "@/components/submit-button";
 import { useChallenge } from "@/hooks/challenges";
 import { useSubmissionCount, useSubmissions } from "@/hooks/submissions";
-import { cn } from "@/lib/utils";
+import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { formatDistanceToNow } from "date-fns";
@@ -167,22 +167,24 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </button>
           </div>
 
-          <div className="p-6 pt-8 pb-20 w-full">
-            <div className="max-w-[600px] mx-auto">
+          <div className="p-6 pt-12 pb-20 w-full">
+            <div >
               {activeTab === ActiveTab.Overview ? (
-                <div>
+                <div className="max-w-2xl">
                   <h1 className="text-4xl break-words font-bold mb-4">
                     {challenge.metadata.title}
                   </h1>
 
                   <StatusBadge status={challenge.status} />
 
-                  <div className="prose prose-sm">
+                  <div className="prose prose-sm max-w-2xl">
                     <Markdown>{challenge.metadata.description}</Markdown>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
                     <span>{submissionCount} submissions</span>
+                    <span>·</span>
+                    <span>by {shortenAddress(challenge.admin)}</span>
                     <span>·</span>
                     <span>{timeString}</span>
                   </div>
@@ -193,7 +195,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                     <SubmissionCard
                       key={submission.id}
                       submission={submission}
-                      isAdmin={isAdmin}
+                      isAdmin={challenge.admin === evmAddress}
                       isWinner={winners.includes(submission.creator)}
                       isIneligible={ineligible.includes(submission.creator)}
                       onMarkAsWinner={() => onMarkAsWinner(submission)}
@@ -205,7 +207,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <div
                     ref={loadMoreRef}
                     className={cn(
-                      "pt-8",
+                      "pt-8 text-muted-foreground text-sm",
                       sortedSubmissions.length === 0 && "py-0"
                     )}
                   >
@@ -304,12 +306,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <SubmitButton challenge={challenge} />
               <ClaimButton challenge={challenge} />
               <ResolveButton
-                isAdmin={isAdmin}
                 challenge={challenge}
+                submissions={sortedSubmissions}
                 winners={winners}
                 ineligible={ineligible}
               />
-              
             </div>
           </div>
         </div>

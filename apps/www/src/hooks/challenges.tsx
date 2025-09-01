@@ -1,3 +1,4 @@
+import { bundlerClient } from "@/config";
 import {
   CreateChallengeParams,
   ResolveChallengeParams,
@@ -58,11 +59,20 @@ export const useCreateChallenge = () => {
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
         network: "base-sepolia",
-        calls: [await escrowService.prepareCreateChallenge(props)],
+        calls: [
+          await escrowService.prepareApprove({
+            amount: props.poolSize,
+          }),
+          await escrowService.prepareCreateChallenge(props)
+        ],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
 
-      return result.userOperationHash;
+      // recover challenge id
+      const receipt = await bundlerClient.getUserOperationReceipt({ hash: result.userOperationHash });
+      const challengeId = await escrowService.recoverChallengeId(receipt.logs);
+
+      return challengeId;
     },
   });
 };

@@ -6,7 +6,7 @@ export function useBalance(user?: Address | null) {
   return useQuery({
     queryKey: ["balance", user],
     queryFn: () => erc20Service.getBalance(user as Address),
-    initialData: 0n,
-    enabled: !!user,
+    // initialData: 0n,
+    // enabled: !!user,
   });
 }

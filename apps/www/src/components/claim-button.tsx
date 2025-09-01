@@ -1,6 +1,7 @@
 import { useClaimable } from "@/hooks/submissions";
 import { Challenge } from "@cdp/common/src/types/challenge";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
+import { useMemo } from "react";
 import { Tooltip } from "react-tooltip";
 import { Button } from "./ui/button";
 
@@ -10,6 +11,12 @@ export const ClaimButton: React.FC<{
   const { evmAddress } = useEvmAddress();
   const { data: claimable } = useClaimable(challenge.id, evmAddress);
 
+  const isAdmin = useMemo(() => {
+    return challenge.admin === evmAddress;
+  }, [challenge.admin, evmAddress]);
+
+  // admins can't claim rewards
+  if (isAdmin) return null;
   return (
     <>
       <Button
