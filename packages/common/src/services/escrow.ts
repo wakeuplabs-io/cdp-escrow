@@ -112,6 +112,7 @@ export class EscrowService {
     startIndex: number,
     count: number
   ): Promise<Challenge[]> {
+    try {
     const challengesCount = await this.getChallengesCount();
     if (startIndex >= challengesCount) {
       return [];
@@ -158,10 +159,13 @@ export class EscrowService {
           },
           admin: challenge.admin,
         };
-      })
-    );
-
-    return data;
+        })
+      );
+      return data;
+    } catch (error) {
+      console.error("Error getting challenges paginated", error);
+      return [];
+    }
   }
 
   async getAllowance(address: Address): Promise<bigint> {

@@ -91,3 +91,11 @@ export const useCreateSubmission = () => {
     },
   });
 };
+
+export const useClaimable = (challengeId: number, user: Address | null) => {
+  return useQuery({
+    queryKey: QueryKeyFactory.claimable(challengeId, user as Address),
+    queryFn: () => escrowService.getClaimable(BigInt(challengeId), user as Address),
+    enabled: !!user,
+  });
+};

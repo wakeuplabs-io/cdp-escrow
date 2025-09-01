@@ -31,10 +31,10 @@ tsx ./scripts/index.ts resolve-challenge --network base-sepolia --challenge-id 0
 tsx ./scripts/index.ts create-submission --network base-sepolia --challenge-id 1 --contact m@gmail.com --body "spaseed"  
 
 # get submission by id
-tsx ./scripts/index.ts find-submission --network base-sepolia --challenge-id 1 --submission-id 0
+tsx ./scripts/index.ts find-submission --network base-sepolia --challenge-id 0 --submission-id 0
 
 # get submission paginated
-tsx ./scripts/index.ts find-submissions --network base-sepolia --challenge-id 1 --start-index 0 --count 2
+tsx ./scripts/index.ts find-submissions --network base-sepolia --challenge-id 0 --start-index 0 --count 2
 
 # check balance
 tsx ./scripts/index.ts balance --network base-sepolia --address 0xA1D3ba06878B6B7EC54781A5BaCBF5068BCaa1d0

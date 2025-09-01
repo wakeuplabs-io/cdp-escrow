@@ -300,20 +300,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
               <span className="uppercase font-semibold text-sm">Actions</span>
             </div>
-            <div className="w-full flex justify-center items-center">
-              {challenge.status === "active" ? (
-                <SubmitButton challengeId={Number(id)} />
-              ) : challenge.status === "pending" && isAdmin ? (
-                <ResolveButton
-                  challengeId={Number(id)}
-                  winners={winners}
-                  ineligible={ineligible}
-                />
-              ) : challenge.status === "pending" && !isAdmin ? (
-                <div>Awaiting for Admin resolution</div>
-              ) : (
-                <ClaimButton challengeId={Number(id)} />
-              )}
+            <div className="space-y-2">
+              <SubmitButton challenge={challenge} />
+              <ClaimButton challenge={challenge} />
+              <ResolveButton
+                isAdmin={isAdmin}
+                challenge={challenge}
+                winners={winners}
+                ineligible={ineligible}
+              />
+              
             </div>
           </div>
         </div>

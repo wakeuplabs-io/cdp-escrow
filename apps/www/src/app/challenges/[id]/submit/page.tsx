@@ -53,6 +53,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         isValid: false,
         errors: ["You are the admin of this challenge"],
       };
+    } else if (!evmAddress) {
+      return { isValid: false, errors: ["Please connect your wallet"] };
     }
 
     const result = submissionMetadataSchema.safeParse({

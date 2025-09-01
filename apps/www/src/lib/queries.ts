@@ -19,4 +19,9 @@ export const QueryKeyFactory = {
     challengeId,
     user,
   ],
+  claimable: (challengeId: number, user: Address) => [
+    "claimable",
+    challengeId,
+    user,
+  ],
 };

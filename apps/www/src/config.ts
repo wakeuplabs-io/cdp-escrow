@@ -12,7 +12,7 @@ export const ipfsClient = new PinataIpfs(
 
 export const escrowService = new EscrowService(
   ipfsClient,
-  process.env.NEXT_PUBLIC_MULTICALL_ADDRESS as Address,
+  "0xca11bde05977b3631167028862be2a173976ca11", // for base and base-sepolia
   process.env.NEXT_PUBLIC_ESCROW_ADDRESS as Address,
   process.env.NEXT_PUBLIC_ERC20_ADDRESS as Address,
   process.env.NEXT_PUBLIC_RPC_URL as string,
