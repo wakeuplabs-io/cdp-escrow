@@ -1,4 +1,4 @@
-import { bundlerClient, escrowService } from "@/config";
+import { bundlerClient, escrowService, NETWORK } from "@/config";
 import { QueryKeyFactory } from "@/lib/queries";
 import {
   ClaimParams,
@@ -91,7 +91,7 @@ export const useCreateSubmission = () => {
 
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
-        network: "base-sepolia",
+        network: NETWORK,
         calls: [await escrowService.prepareCreateSubmission(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
@@ -143,7 +143,7 @@ export const useClaim = () => {
 
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
-        network: "base-sepolia",
+        network: NETWORK,
         calls: [await escrowService.prepareClaim(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });

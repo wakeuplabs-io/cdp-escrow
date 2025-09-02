@@ -1,7 +1,7 @@
 import { useCurrentUser, useSendUserOperation } from "@coinbase/cdp-hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Address } from "viem";
-import { erc20Service } from "../config";
+import { erc20Service, NETWORK } from "../config";
 
 export function useBalance(user?: Address | null) {
   return useQuery({
@@ -25,7 +25,7 @@ export function useWithdraw() {
 
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
-        network: "base-sepolia",
+        network: NETWORK,
         calls: [await erc20Service.prepareTransfer(props.amount, props.to)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });

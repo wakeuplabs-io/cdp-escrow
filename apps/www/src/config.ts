@@ -6,6 +6,8 @@ import { createBundlerClient } from "viem/account-abstraction";
 
 export const TOKEN_DECIMALS = 18;
 
+export const NETWORK = process.env.NEXT_PUBLIC_NETWORK as "base" | "base-sepolia";
+
 export const ipfsClient = new PinataIpfs(
   process.env.NEXT_PUBLIC_PINATA_JWT as string,
   process.env.NEXT_PUBLIC_PINATA_GATEWAY as string

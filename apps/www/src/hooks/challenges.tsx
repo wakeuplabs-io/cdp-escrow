@@ -11,7 +11,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { escrowService } from "../config";
+import { escrowService, NETWORK } from "../config";
 import { QueryKeyFactory } from "../lib/queries";
 
 export const useChallenge = (id: number) => {
@@ -64,7 +64,7 @@ export const useCreateChallenge = () => {
 
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
-        network: "base-sepolia",
+        network: NETWORK,
         calls: [
           await escrowService.prepareApprove({
             amount: props.poolSize,
@@ -101,7 +101,7 @@ export const useResolveChallenge = () => {
 
       const result = await sendUserOperation({
         evmSmartAccount: smartAccount,
-        network: "base-sepolia",
+        network: NETWORK,
         calls: [await escrowService.prepareResolveChallenge(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
