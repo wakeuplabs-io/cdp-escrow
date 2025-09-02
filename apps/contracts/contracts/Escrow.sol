@@ -21,6 +21,10 @@ contract Escrow is IEscrow {
     mapping(uint256 => uint256) internal submissionsCount;
     // challengeId -> submissionId -> submission
     mapping(uint256 => mapping(uint256 => Submission)) internal submissions;
+    // challengeId -> winner submissions 
+    mapping(uint256 => uint256[]) internal awardedSubmissionsPerChallenge;
+    // challengeId -> ineligible submissions
+    mapping(uint256 => uint256[]) internal ineligibleSubmissionsPerChallenge;
     // challengeId -> submissionId -> true
     mapping(uint256 => mapping(uint256 => bool)) internal isAwarded;
     // challengeId -> submissionId -> true
@@ -148,6 +152,16 @@ contract Escrow is IEscrow {
     }
 
     /// @inheritdoc IEscrow
+    function getWinnerSubmissions(uint256 challengeId) public view returns (uint256[] memory) {
+        return awardedSubmissionsPerChallenge[challengeId];
+    }
+    
+    /// @inheritdoc IEscrow
+    function getIneligibleSubmissions(uint256 challengeId) public view returns (uint256[] memory) {
+        return ineligibleSubmissionsPerChallenge[challengeId];
+    }
+
+    /// @inheritdoc IEscrow
     function resolveChallenge(
         uint256 challengeId,
         uint256[] calldata awardedSubmissions,
@@ -185,9 +199,11 @@ contract Escrow is IEscrow {
         // store awarded and ineligible submissions
         for (uint256 i = 0; i < awardedSubmissions.length; i++) {
             isAwarded[challengeId][awardedSubmissions[i]] = true;
+            awardedSubmissionsPerChallenge[challengeId].push(awardedSubmissions[i]);
         }
         for (uint256 i = 0; i < ineligibleSubmissions.length; i++) {
             isIneligible[challengeId][ineligibleSubmissions[i]] = true;
+            ineligibleSubmissionsPerChallenge[challengeId].push(ineligibleSubmissions[i]);
         }
 
         // update submissions and claimable balances

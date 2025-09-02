@@ -3,7 +3,7 @@
 import { AccountManager } from "@/components/account-manager";
 import { ClaimButton } from "@/components/claim-button";
 import { ResolveButton } from "@/components/resolve-button";
-import { StatusBadge } from "@/components/status-badge";
+import { ChallengeStatusBadge } from "@/components/status-badge";
 import { SubmissionCard } from "@/components/submission-card";
 import { SubmitButton } from "@/components/submit-button";
 import { useChallenge } from "@/hooks/challenges";
@@ -36,6 +36,7 @@ enum ActiveTab {
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Overview);
 
   const { data: challenge, isPending: isChallengePending } = useChallenge(
     Number(id)
@@ -49,37 +50,44 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   } = useSubmissions(Number(id));
   const { evmAddress } = useEvmAddress();
 
-  // state
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Overview);
-  const [winners, setWinners] = useState<string[]>([]);
-  const [ineligible, setIneligible] = useState<string[]>([]);
+  // what the admin has selected
+  const [selectedWinners, setSelectedWinners] = useState<bigint[]>([]);
+  const [selectedIneligible, setSelectedIneligible] = useState<bigint[]>([]);
 
   const onMarkAsWinner = useCallback(
     (submission: Submission) => {
-      setWinners([...winners, submission.creator]);
-      setIneligible(
-        ineligible.filter((ineligible) => ineligible !== submission.creator)
+      setSelectedWinners([...selectedWinners, BigInt(submission.id)]);
+      setSelectedIneligible(
+        selectedIneligible.filter(
+          (ineligible) => ineligible !== BigInt(submission.id)
+        )
       );
     },
-    [winners, ineligible]
+    [selectedWinners, selectedIneligible]
   );
 
   const onMarkAsIneligible = useCallback(
     (submission: Submission) => {
-      setIneligible([...ineligible, submission.creator]);
-      setWinners(winners.filter((winner) => winner !== submission.creator));
+      setSelectedIneligible([...selectedIneligible, BigInt(submission.id)]);
+      setSelectedWinners(
+        selectedWinners.filter((winner) => winner !== BigInt(submission.id))
+      );
     },
-    [winners, ineligible]
+    [selectedWinners, selectedIneligible]
   );
 
   const onMarkAsAcceptable = useCallback(
     (submission: Submission) => {
-      setIneligible(
-        ineligible.filter((ineligible) => ineligible !== submission.creator)
+      setSelectedIneligible(
+        selectedIneligible.filter(
+          (ineligible) => ineligible !== BigInt(submission.id)
+        )
       );
-      setWinners(winners.filter((winner) => winner !== submission.creator));
+      setSelectedWinners(
+        selectedWinners.filter((winner) => winner !== BigInt(submission.id))
+      );
     },
-    [ineligible, winners]
+    [selectedIneligible, selectedWinners]
   );
 
   // infinite scroll
@@ -113,11 +121,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .flatMap((page) => page.submissions)
       .sort((a, b) => b.id - a.id);
   }, [submissions]);
-
-  const isAdmin = useMemo(
-    () => challenge?.admin === evmAddress,
-    [challenge?.admin, evmAddress]
-  );
 
   if (isChallengePending || !challenge)
     return (
@@ -168,14 +171,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="p-6 pt-12 pb-20 w-full">
-            <div >
+            <div>
               {activeTab === ActiveTab.Overview ? (
                 <div className="max-w-2xl">
                   <h1 className="text-4xl break-words font-bold mb-4">
                     {challenge.metadata.title}
                   </h1>
 
-                  <StatusBadge status={challenge.status} />
+                  <ChallengeStatusBadge status={challenge.status} />
 
                   <div className="prose prose-sm max-w-2xl">
                     <Markdown>{challenge.metadata.description}</Markdown>
@@ -196,8 +199,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       key={submission.id}
                       submission={submission}
                       isAdmin={challenge.admin === evmAddress}
-                      isWinner={winners.includes(submission.creator)}
-                      isIneligible={ineligible.includes(submission.creator)}
+                      isWinner={selectedWinners.includes(BigInt(submission.id))}
+                      isIneligible={selectedIneligible.includes(
+                        BigInt(submission.id)
+                      )}
                       onMarkAsWinner={() => onMarkAsWinner(submission)}
                       onMarkAsIneligible={() => onMarkAsIneligible(submission)}
                       onMarkAsAcceptable={() => onMarkAsAcceptable(submission)}
@@ -308,8 +313,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <ResolveButton
                 challenge={challenge}
                 submissions={sortedSubmissions}
-                winners={winners}
-                ineligible={ineligible}
+                winners={selectedWinners}
+                ineligible={selectedIneligible}
               />
             </div>
           </div>

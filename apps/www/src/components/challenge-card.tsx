@@ -3,7 +3,7 @@ import { Challenge } from "@cdp/common/src/types/challenge";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useMemo } from "react";
-import { StatusIcon } from "./status-badge";
+import { ChallengeStatusIcon } from "./status-badge";
 
 export const ChallengeCard: React.FC<{
   challenge: Challenge;
@@ -20,7 +20,7 @@ export const ChallengeCard: React.FC<{
     <div className="flex items-center justify-between w-full gap-2 py-[14px]">
       <Link href={`challenges/${challenge.id}`}>
         <div className="flex items-center gap-2">
-          <StatusIcon status={challenge.status} />
+          <ChallengeStatusIcon status={challenge.status} />
           <span className="text-lg font-bold my-1">
             {challenge.metadata.title}
           </span>

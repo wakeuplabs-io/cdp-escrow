@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
 import { ChallengeStatus } from "@cdp/common/src/types/challenge";
-import { CheckIcon, RadioIcon } from "lucide-react";
+import { SubmissionStatus } from "@cdp/common/src/types/submission";
+import { BanIcon, CheckIcon, RadioIcon, TrophyIcon } from "lucide-react";
 import { useMemo } from "react";
+import { Tooltip } from "react-tooltip";
 
-export const StatusIcon: React.FC<{
+export const ChallengeStatusIcon: React.FC<{
   status: ChallengeStatus;
   className?: string;
 }> = ({ status, className }) => {
@@ -42,7 +44,7 @@ export const StatusIcon: React.FC<{
   return null;
 };
 
-export const StatusBadge: React.FC<{
+export const ChallengeStatusBadge: React.FC<{
   status: ChallengeStatus;
   className?: string;
 }> = ({ status, className }) => {
@@ -65,8 +67,42 @@ export const StatusBadge: React.FC<{
         className
       )}
     >
-      <StatusIcon status={status} className="text-white" />
+      <ChallengeStatusIcon status={status} className="text-white" />
       <span className="uppercase text-xs font-medium">{statusText}</span>
     </div>
+  );
+};
+
+export const SubmissionStatusBadge: React.FC<{
+  status: SubmissionStatus;
+  className?: string;
+}> = ({ status, className }) => {
+
+  
+  if (!["awarded", "ineligible"].includes(status)) {
+    return null;
+  }
+  
+  return (
+    <>
+      <span
+        data-tooltip-id="submission-status-tooltip"
+        className={cn(
+          "text-xs rounded-full px-1.5 py-0.5 text-white font-medium",
+          status === "awarded" ? "bg-green-500" : "bg-red-500"
+        )}
+      >
+        {status === "awarded" ? (
+          <TrophyIcon className="w-3 h-3" />
+        ) : (
+          <BanIcon className="w-3 h-3" />
+        )}
+      </span>
+
+      <Tooltip
+        id="submission-status-tooltip"
+        content={status === "awarded" ? "Winner" : "Ineligible"}
+      />
+    </>
   );
 };

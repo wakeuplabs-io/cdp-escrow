@@ -23,5 +23,10 @@ export const findChallengeByIdCommand = new Command("find-challenge")
     const challenge = await escrowService.getChallengeById(
       Number(options.challengeId)
     );
+
+    if (challenge?.status === "completed") {
+      // TODO: get winners and ineligible submissions
+    }
+
     console.log(challenge);
   });
