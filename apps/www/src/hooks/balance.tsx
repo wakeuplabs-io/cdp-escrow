@@ -30,7 +30,7 @@ export function useWithdraw() {
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
       
-      queryClient.invalidateQueries({ queryKey: ["balance", currentUser?.evmAddress] });
+      queryClient.invalidateQueries({ queryKey: ["balance", smartAccount] });
       
       return { userOperationHash: result.userOperationHash };
     },

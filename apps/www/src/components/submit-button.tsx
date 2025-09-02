@@ -22,14 +22,6 @@ export const SubmitButton: React.FC<{
     return challenge.admin === evmAddress;
   }, [challenge.admin, evmAddress]);
 
-  const hasSubmission = useMemo(
-    () =>
-      userSubmissions?.some(
-        (submission) => submission.challengeId === challenge.id
-      ),
-    [userSubmissions, challenge.id]
-  );
-
   const validation = useMemo(() => {
     const hasSubmission = userSubmissions?.some(
       (submission) => submission.challengeId === challenge.id
@@ -48,7 +40,7 @@ export const SubmitButton: React.FC<{
       };
 
     return { isValid: true, message: "" };
-  }, [userSubmissions, challenge.status]);
+  }, [userSubmissions, challenge]);
 
   if (isAdmin) return null;
   return (

@@ -114,11 +114,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .sort((a, b) => b.id - a.id);
   }, [submissions]);
 
-  const isAdmin = useMemo(
-    () => challenge?.admin === evmAddress,
-    [challenge?.admin, evmAddress]
-  );
-
   if (isChallengePending || !challenge)
     return (
       <div className="flex items-center justify-center h-full w-full p-10">
@@ -168,7 +163,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="p-6 pt-12 pb-20 w-full">
-            <div >
+            <div>
               {activeTab === ActiveTab.Overview ? (
                 <div className="max-w-2xl">
                   <h1 className="text-4xl break-words font-bold mb-4">

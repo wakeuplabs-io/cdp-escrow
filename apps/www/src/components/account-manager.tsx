@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { erc20Service, TOKEN_DECIMALS } from "@/config";
+import { TOKEN_DECIMALS } from "@/config";
 import { useBalance, useWithdraw } from "@/hooks/balance";
 import { formatBalance, shortenAddress } from "@/lib/utils";
 import { useEvmAddress, useIsSignedIn, useSignOut } from "@coinbase/cdp-hooks";
@@ -102,8 +102,6 @@ const Onramp: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
     setPending(true);
 
     try {
-      const balanceBefore = await erc20Service.getBalance(evmAddress);
-
       const res = await fetch("/api/session", {
         method: "POST",
         body: JSON.stringify({
@@ -120,21 +118,6 @@ const Onramp: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
         "width=500,height=800,scrollbars=no,resizable=no"
       );
       setTab(Tab.WaitingOnramp);
-
-      // setWaiting(true);
-      // setPending(false);
-
-      // // poll balance every 2 second
-      // const interval = setInterval(async () => {
-      //   const balance = await erc20Service.getBalance(evmAddress);
-      //   if (balance > balanceBefore) {
-      //     setWaiting(false);
-      //     clearInterval(interval);
-      //     setTab(Tab.Account);
-      //   }
-      // }, 2000);
-
-      // return () => clearInterval(interval);
     } finally {
       setPending(false);
     }
@@ -163,7 +146,7 @@ const Onramp: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
   );
 };
 
-const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
+const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
   const { evmAddress } = useEvmAddress();
   const { data: balance } = useBalance(evmAddress);
 
@@ -184,7 +167,7 @@ const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
   );
 };
 
-const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
+const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
   const { evmAddress } = useEvmAddress();
   const { data: balance } = useBalance(evmAddress);
   const { mutateAsync: withdraw, isPending: isWithdrawing } = useWithdraw();
@@ -211,7 +194,7 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
           description: error instanceof Error ? error.message : "Unknown error",
         });
       });
-  }, [to, amount, withdraw]);
+  }, [to, amount, withdraw, evmAddress]);
 
   const validation = useMemo(() => {
     if (!to) {
@@ -231,7 +214,7 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
     }
 
     return { isValid: true, errors: [] };
-  }, [to, amount]);
+  }, [to, amount, balance]);
 
   if (!evmAddress) return null;
   return (
@@ -316,7 +299,7 @@ const WaitingOnramp: React.FC<{ setTab: (tab: Tab) => void }> = ({
   setTab,
 }) => {
   const { evmAddress } = useEvmAddress();
-  const { data: balance, refetch, isFetching } = useBalance(evmAddress);
+  const { data: balance, refetch } = useBalance(evmAddress);
   const [pending, setPending] = useState(false);
 
   const onRefresh = useCallback(() => {
@@ -346,9 +329,7 @@ const WaitingOnramp: React.FC<{ setTab: (tab: Tab) => void }> = ({
 export const AccountManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState(Tab.Account);
-  const [onrampAmount, setOnrampAmount] = useState("");
 
-  const { signOut } = useSignOut();
   const { isSignedIn } = useIsSignedIn();
   const { evmAddress } = useEvmAddress();
   const { data: balance } = useBalance(evmAddress);
@@ -404,7 +385,7 @@ export const AccountManager = () => {
     } as const;
 
     return tabs[tab];
-  }, [balance, evmAddress, onrampAmount, setOnrampAmount, signOut, tab]);
+  }, [balance, evmAddress, tab]);
 
   return (
     <>
