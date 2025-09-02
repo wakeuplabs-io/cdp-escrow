@@ -78,9 +78,9 @@ export const useCreateChallenge = () => {
       const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: result.userOperationHash });
       const challengeId = await escrowService.recoverChallengeId(receipt.logs);
 
-      // store in cache
-      const challenge = await escrowService.getChallengeById(challengeId);
-      queryClient.setQueryData(QueryKeyFactory.challenge(challengeId), challenge);
+      // invalidate cached queries
+      queryClient.invalidateQueries({ queryKey: QueryKeyFactory.challenge(challengeId) });
+      queryClient.invalidateQueries({ queryKey: QueryKeyFactory.challenges() });
 
       return challengeId;
     },

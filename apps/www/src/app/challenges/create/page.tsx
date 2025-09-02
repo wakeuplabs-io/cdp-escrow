@@ -11,6 +11,7 @@ import { TOKEN_DECIMALS } from "@/config";
 import { useCreateChallenge } from "@/hooks/challenges";
 import { cn } from "@/lib/utils";
 import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
+import { useEvmAddress } from "@coinbase/cdp-hooks";
 import {
   ChevronDownIcon,
   MoveLeftIcon,
@@ -33,9 +34,9 @@ export default function CreateChallengePage() {
   const [poolSize, setPoolSize] = useState("");
 
   const router = useRouter();
-
   const { mutateAsync: createChallenge, isPending: isCreatingChallenge } =
     useCreateChallenge();
+  const { evmAddress } = useEvmAddress();
 
   const onCreateChallenge = useCallback(async () => {
     // submit is disabled if validation fails, so here we can assume it's valid
@@ -61,9 +62,7 @@ export default function CreateChallengePage() {
         isValid: false,
         errors: ["Pool size must be greater than 1 USDC"],
       };
-    }
-
-    if (endsAt < new Date()) {
+    } else if (endsAt < new Date()) {
       return { isValid: false, errors: ["Deadline must be in the future"] };
     }
 
@@ -71,19 +70,20 @@ export default function CreateChallengePage() {
       title,
       description,
     });
-
-    if (result.success) {
-      return { isValid: true, errors: [] };
+    if (!result.success) {
+      const errors = result.error.issues.map((issue) => issue.message);
+      return { isValid: false, errors };
+    } else if (!evmAddress) {
+      return { isValid: false, errors: ["Please connect your wallet"] };
     }
 
-    const errors = result.error.issues.map((issue) => issue.message);
-    return { isValid: false, errors };
-  }, [title, description, poolSize, endsAt]);
+    return { isValid: true, errors: [] };
+  }, [title, description, poolSize, endsAt, evmAddress]);
 
   const errorMessage = validation.errors[0];
 
   return (
-    <div className="">
+    <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <Link
           href="/"

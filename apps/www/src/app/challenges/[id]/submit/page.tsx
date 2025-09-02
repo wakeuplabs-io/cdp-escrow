@@ -52,30 +52,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const validation = useMemo(() => {
     if (!contact) {
       return { isValid: false, errors: ["Contact is required"] };
-    }
-    if (challenge?.status !== "active") {
+    } else if (challenge?.status !== "active") {
       return { isValid: false, errors: ["Challenge is not active"] };
-    }
-    if (challenge?.admin === evmAddress) {
+    } else  if (challenge?.admin === evmAddress) {
       return {
         isValid: false,
         errors: ["You are the admin of this challenge"],
       };
-    }
-    if (!evmAddress) {
+    } else  if (!evmAddress) {
       return { isValid: false, errors: ["Please connect your wallet"] };
     }
 
     const result = submissionMetadataSchema.safeParse({
       description,
     });
-
-    if (result.success) {
-      return { isValid: true, errors: [] };
+    if (!result.success) {
+      const errors = result.error.issues.map((issue) => issue.message);
+      return { isValid: false, errors };
     }
 
-    const errors = result.error.issues.map((issue) => issue.message);
-    return { isValid: false, errors };
+    return { isValid: true, errors: [] };
   }, [description, contact, challenge?.status, challenge?.admin, evmAddress]);
 
   const errorMessage = useMemo(() => validation.errors[0], [validation.errors]);

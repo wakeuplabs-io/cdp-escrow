@@ -50,9 +50,9 @@ const CHALLENGE_STATUS_MAP = {
 
 const SUBMISSION_STATUS_MAP = {
   [0]: "pending",
-  [1]: "accepted",
-  [2]: "awarded",
-  [3]: "ineligible",
+  [1]: "ineligible",
+  [2]: "accepted",
+  [3]: "awarded",
 } as const;
 
 export class EscrowService {

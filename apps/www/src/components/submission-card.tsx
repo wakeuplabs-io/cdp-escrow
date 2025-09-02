@@ -30,6 +30,10 @@ export const SubmissionCard = ({
   onMarkAsIneligible: () => void;
   onMarkAsAcceptable: () => void;
 }) => {
+
+  const awarded = isWinner || submission.status === "awarded";
+  const ineligible = isIneligible || submission.status === "ineligible";
+  
   return (
     <div className="w-full py-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -44,7 +48,7 @@ export const SubmissionCard = ({
           <div>
             <div className="flex items-center gap-2">
               <span>{shortenAddress(submission.creator)}</span>
-              <SubmissionStatusBadge status={isWinner ? "awarded" : isIneligible ? "ineligible" : "accepted"} />
+              <SubmissionStatusBadge status={awarded ? "awarded" : ineligible ? "ineligible" : submission.status} />
             </div>
             <div className="text-xs text-muted-foreground space-x-2">
               {submission.createdAt.toLocaleDateString()} · #{submission.id}
@@ -54,7 +58,7 @@ export const SubmissionCard = ({
 
         <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger disabled={!isAdmin} asChild>
+            <DropdownMenuTrigger disabled={!isAdmin || awarded || ineligible} asChild>
               <button className="disabled:opacity-50 disabled:cursor-not-allowed">
                 <EllipsisVerticalIcon className="w-4 h-4" />
               </button>

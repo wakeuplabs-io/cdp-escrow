@@ -4,8 +4,8 @@ import { z } from "zod";
 export const challengeStatusSchema = z.enum(["active", "pending", "completed"]);
 
 export const challengeMetadataSchema = z.object({
-  title: z.string().min(10),
-  description: z.string().min(100),
+  title: z.string().min(10, "Title must be at least 10 characters"),
+  description: z.string().min(100, "Description must be at least 100 characters"),
 });
 
 export const challengeSchema = z.object({
@@ -13,7 +13,7 @@ export const challengeSchema = z.object({
   status: challengeStatusSchema,
   endsAt: z.date(),
   createdAt: z.date(),
-  poolSize: z.bigint().gte(parseEther("1")),
+  poolSize: z.bigint().gte(parseEther("1"), "Pool size must be at least 1 USDC"),
   metadata: challengeMetadataSchema,
   admin: z.custom<Address>(),
 });

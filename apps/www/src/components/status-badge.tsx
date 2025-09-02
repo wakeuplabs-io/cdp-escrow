@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ChallengeStatus } from "@cdp/common/src/types/challenge";
 import { SubmissionStatus } from "@cdp/common/src/types/submission";
-import { BanIcon, CheckIcon, RadioIcon, TrophyIcon } from "lucide-react";
+import { CheckIcon, ClockIcon, RadioIcon, StarIcon, XIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Tooltip } from "react-tooltip";
 
@@ -78,30 +78,42 @@ export const SubmissionStatusBadge: React.FC<{
   className?: string;
 }> = ({ status, className }) => {
 
-  
-  if (!["awarded", "ineligible"].includes(status)) {
-    return null;
-  }
-  
+  const icon = {
+    awarded: <StarIcon className="w-2 h-2 fill-white" />,
+    ineligible: <XIcon className="w-2 h-2" />,
+    accepted: <CheckIcon className="w-2 h-2" />,
+    pending: <ClockIcon className="w-2 h-2" />,
+  } as const;
+
+  const bgColor = {
+    awarded: "bg-green-600",
+    ineligible: "bg-red-500",
+    accepted: "bg-zinc-500",
+    pending: "bg-yellow-500",
+  } as const;
+
+  const tooltip = {
+    awarded: "Winner",
+    ineligible: "Ineligible",
+    accepted: "Accepted",
+    pending: "Pending",
+  } as const;
+
   return (
     <>
       <span
         data-tooltip-id="submission-status-tooltip"
         className={cn(
-          "text-xs rounded-full px-1.5 py-0.5 text-white font-medium",
-          status === "awarded" ? "bg-green-500" : "bg-red-500"
+          "text-xs rounded-full h-4 w-4 text-white font-medium flex items-center justify-center",
+          bgColor[status]
         )}
       >
-        {status === "awarded" ? (
-          <TrophyIcon className="w-3 h-3" />
-        ) : (
-          <BanIcon className="w-3 h-3" />
-        )}
+        {icon[status]}
       </span>
 
       <Tooltip
         id="submission-status-tooltip"
-        content={status === "awarded" ? "Winner" : "Ineligible"}
+        content={tooltip[status]}
       />
     </>
   );
