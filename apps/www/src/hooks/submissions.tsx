@@ -1,9 +1,14 @@
-import { escrowService } from "@/config";
+import { bundlerClient, escrowService } from "@/config";
 import { QueryKeyFactory } from "@/lib/queries";
 import { CreateSubmissionParams } from "@cdp/common/src/services/escrow";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useCurrentUser, useSendUserOperation } from "@coinbase/cdp-hooks";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Address } from "viem";
 
 export const useSubmission = (challengeId: number, submissionId: number) => {
@@ -54,16 +59,17 @@ export const useSubmissions = (challengeId: number) => {
 export const useSubmissionCount = (challengeId: number) => {
   return useQuery({
     queryKey: QueryKeyFactory.submissionCount(challengeId),
-    queryFn: () =>
-      escrowService.getSubmissionsCount(BigInt(challengeId)),
+    queryFn: () => escrowService.getSubmissionsCount(BigInt(challengeId)),
   });
 };
 
-export const useUserSubmissions = (challengeId: number, user: Address | null) => {
+export const useUserSubmissions = (
+  challengeId: number,
+  user: Address | null
+) => {
   return useQuery({
     queryKey: QueryKeyFactory.userSubmissions(challengeId, user as Address),
-    queryFn: () =>
-      escrowService.getUserSubmissions(user as Address),
+    queryFn: () => escrowService.getUserSubmissions(user as Address),
     enabled: !!user,
   });
 };
@@ -71,6 +77,7 @@ export const useUserSubmissions = (challengeId: number, user: Address | null) =>
 export const useCreateSubmission = () => {
   const { currentUser } = useCurrentUser();
   const { sendUserOperation } = useSendUserOperation();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (props: CreateSubmissionParams) => {
@@ -86,10 +93,26 @@ export const useCreateSubmission = () => {
         calls: [await escrowService.prepareCreateSubmission(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
-      
-      // TODO: invalidate  queries
+      const receipt = await bundlerClient.waitForUserOperationReceipt({
+        hash: result.userOperationHash,
+      });
+      const submissionId = await escrowService.recoverSubmissionId(
+        receipt.logs
+      );
+      const submission = await escrowService.getSubmissionById(
+        BigInt(props.challengeId),
+        BigInt(submissionId)
+      );
 
-      return result.userOperationHash;
+      // Update cache
+      queryClient.setQueryData(
+        QueryKeyFactory.submissions(props.challengeId),
+        (old: Submission[] = []) => {
+          return [...old, submission];
+        }
+      );
+
+      return { submission, userOperationHash: result.userOperationHash };
     },
   });
 };
@@ -97,7 +120,8 @@ export const useCreateSubmission = () => {
 export const useClaimable = (challengeId: number, user: Address | null) => {
   return useQuery({
     queryKey: QueryKeyFactory.claimable(challengeId, user as Address),
-    queryFn: () => escrowService.getClaimable(BigInt(challengeId), user as Address),
+    queryFn: () =>
+      escrowService.getClaimable(BigInt(challengeId), user as Address),
     enabled: !!user,
   });
 };

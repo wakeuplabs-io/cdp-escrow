@@ -5,7 +5,12 @@ import {
 } from "@cdp/common/src/services/escrow";
 import { Challenge } from "@cdp/common/src/types/challenge";
 import { useCurrentUser, useSendUserOperation } from "@coinbase/cdp-hooks";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { escrowService } from "../config";
 import { QueryKeyFactory } from "../lib/queries";
 
@@ -48,6 +53,7 @@ export const useChallenges = () => {
 export const useCreateChallenge = () => {
   const { currentUser } = useCurrentUser();
   const { sendUserOperation } = useSendUserOperation();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (props: CreateChallengeParams) => {
@@ -69,8 +75,12 @@ export const useCreateChallenge = () => {
       });
 
       // recover challenge id
-      const receipt = await bundlerClient.getUserOperationReceipt({ hash: result.userOperationHash });
+      const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: result.userOperationHash });
       const challengeId = await escrowService.recoverChallengeId(receipt.logs);
+
+      // store in cache
+      const challenge = await escrowService.getChallengeById(challengeId);
+      queryClient.setQueryData(QueryKeyFactory.challenge(challengeId), challenge);
 
       return challengeId;
     },
@@ -80,6 +90,7 @@ export const useCreateChallenge = () => {
 export const useResolveChallenge = () => {
   const { currentUser } = useCurrentUser();
   const { sendUserOperation } = useSendUserOperation();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (props: ResolveChallengeParams) => {
@@ -94,8 +105,12 @@ export const useResolveChallenge = () => {
         calls: [await escrowService.prepareResolveChallenge(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
+      await bundlerClient.waitForUserOperationReceipt({ hash: result.userOperationHash });
 
-      return result.userOperationHash;
+      const challenge = await escrowService.getChallengeById(props.challengeId);
+      queryClient.setQueryData(QueryKeyFactory.challenge(props.challengeId), challenge);
+
+      return { userOperationHash: result.userOperationHash };
     },
   });
 };

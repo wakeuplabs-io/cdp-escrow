@@ -1,8 +1,6 @@
-import { TOKEN_DECIMALS } from "@/config";
 import { useCopyToClipboard } from "@/hooks/copy";
-import { cn, shortenAddress } from "@/lib/utils";
+import { cn, formatBalance, shortenAddress } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
-import { formatUnits } from "viem";
 
 export const Address = ({
   label,
@@ -15,6 +13,7 @@ export const Address = ({
   address: string;
   balance?: bigint;
   balanceLabel?: string;
+  balancePending?: boolean;
   className?: string;
 }) => {
   const { copyToClipboard, copied } = useCopyToClipboard();
@@ -41,8 +40,12 @@ export const Address = ({
       </button>
 
       {balance !== undefined && balanceLabel !== undefined && (
-        <div className="text-xs text-muted-foreground absolute right-0 bottom-1 bg-muted rounded-md px-4 py-3">
-          {formatUnits(balance, TOKEN_DECIMALS)} {balanceLabel}
+        <div
+          className={cn(
+            "text-xs text-muted-foreground absolute right-0 bottom-1 bg-muted rounded-md px-4 py-3"
+          )}
+        >
+          {formatBalance(balance) + " " + balanceLabel}
         </div>
       )}
     </div>

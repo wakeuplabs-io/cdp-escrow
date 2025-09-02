@@ -4,6 +4,7 @@ import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { useCallback, useMemo } from "react";
 import { Tooltip } from "react-tooltip";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 
 export const ResolveButton: React.FC<{
@@ -32,9 +33,11 @@ export const ResolveButton: React.FC<{
     }
 
     resolveChallenge({
-      challengeId: BigInt(challenge.id),
+      challengeId: challenge.id,
       winners: winners.map((winner) => BigInt(winner)),
       ineligible: ineligible.map((ineligible) => BigInt(ineligible)),
+    }).then(({ userOperationHash }) => {
+      toast.success("Challenge resolved successfully with user operation hash: " + userOperationHash);
     });
   }, [challenge.id, winners, ineligible, resolveChallenge]);
 

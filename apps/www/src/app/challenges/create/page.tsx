@@ -1,7 +1,6 @@
 "use client";
 
-import { AccountManager } from "@/components/account-manager/account-manager";
-import { BackButton } from "@/components/back-button";
+import { AccountManager } from "@/components/account-manager";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -12,7 +11,12 @@ import { TOKEN_DECIMALS } from "@/config";
 import { useCreateChallenge } from "@/hooks/challenges";
 import { cn } from "@/lib/utils";
 import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
-import { ChevronDownIcon, SendHorizontalIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  Link,
+  MoveLeftIcon,
+  SendHorizontalIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
@@ -81,7 +85,12 @@ export default function CreateChallengePage() {
   return (
     <div className="">
       <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <BackButton to="/" />
+        <Link
+          href="/"
+          className="flex items-center justify-center h-[46px] w-[46px]  border rounded-full"
+        >
+          <MoveLeftIcon className="w-4 h-4" />
+        </Link>
 
         <div className="flex items-center gap-2">
           <AccountManager />

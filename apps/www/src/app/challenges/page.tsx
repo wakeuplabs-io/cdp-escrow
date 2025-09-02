@@ -1,6 +1,6 @@
 "use client";
 
-import { AccountManager } from "@/components/account-manager/account-manager";
+import { AccountManager } from "@/components/account-manager";
 import { ChallengeCard } from "@/components/challenge-card";
 import { useChallenges } from "@/hooks/challenges";
 import { useIsSignedIn } from "@coinbase/cdp-hooks";

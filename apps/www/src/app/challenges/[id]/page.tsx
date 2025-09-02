@@ -1,6 +1,6 @@
 "use client";
 
-import { AccountManager } from "@/components/account-manager/account-manager";
+import { AccountManager } from "@/components/account-manager";
 import { ClaimButton } from "@/components/claim-button";
 import { ResolveButton } from "@/components/resolve-button";
 import { StatusBadge } from "@/components/status-badge";

@@ -40,7 +40,9 @@ export const SubmissionCard = ({
           <Image
             src="/avatar.webp"
             alt="avatar"
-            className="w-[32px] h-[32px] rounded-full"
+            className="rounded-full"
+            width={32}
+            height={32}
           />
           <div>
             <div className="flex items-center gap-2">

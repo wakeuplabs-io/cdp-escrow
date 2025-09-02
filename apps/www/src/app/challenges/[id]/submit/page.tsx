@@ -1,13 +1,12 @@
 "use client";
 
-import { AccountManager } from "@/components/account-manager/account-manager";
-import { BackButton } from "@/components/back-button";
+import { AccountManager } from "@/components/account-manager";
 import { useChallenge } from "@/hooks/challenges";
 import { useCreateSubmission } from "@/hooks/submissions";
 import { cn } from "@/lib/utils";
 import { submissionMetadataSchema } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
-import { SendHorizontalIcon } from "lucide-react";
+import { Link, MoveLeftIcon, SendHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
@@ -29,19 +28,24 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   const onCreateSubmission = useCallback(async () => {
     // submit is disabled if validation fails, so here we can assume it's valid
-    try {
-      await createSubmission({
-        challengeId: BigInt(id),
-        contact,
-        description: description,
+    createSubmission({
+      challengeId: Number(id),
+      contact,
+      description: description,
+    })
+      .then(({ userOperationHash }) => {
+        toast.success(
+          "Submission created successfully with user operation hash: " +
+            userOperationHash
+        );
+        router.push(`/challenges/${id}`);
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Failed to create submission", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
       });
-      router.push(`/challenges/${id}`);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to create submission", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
   }, [id, description, contact, createSubmission, router]);
 
   const validation = useMemo(() => {
@@ -75,7 +79,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="">
       <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <BackButton to="/" />
+        <Link
+          href="/"
+          className="flex items-center justify-center h-[46px] w-[46px]  border rounded-full"
+        >
+          <MoveLeftIcon className="w-4 h-4" />
+        </Link>
 
         <div className="flex items-center gap-2">
           <AccountManager />

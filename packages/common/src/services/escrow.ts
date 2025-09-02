@@ -23,19 +23,19 @@ export type CreateChallengeParams = {
 };
 
 export type ResolveChallengeParams = {
-  challengeId: bigint;
+  challengeId: number;
   winners: bigint[];
   ineligible: bigint[];
 };
 
 export type CreateSubmissionParams = {
-  challengeId: bigint;
+  challengeId: number;
   contact: string;
   description: string;
 };
 
 export type ClaimParams = {
-  challengeId: bigint;
+  challengeId: number;
 };
 
 export type ApproveParams = {
@@ -114,52 +114,52 @@ export class EscrowService {
     count: number
   ): Promise<Challenge[]> {
     try {
-    const challengesCount = await this.getChallengesCount();
-    if (startIndex >= challengesCount) {
-      return [];
-    }
+      const challengesCount = await this.getChallengesCount();
+      if (startIndex >= challengesCount) {
+        return [];
+      }
 
-    // if the count is greater than the number of challenges, set the count to the number of challenges
-    if (startIndex + count > challengesCount) {
-      count = challengesCount - startIndex;
-    }
+      // if the count is greater than the number of challenges, set the count to the number of challenges
+      if (startIndex + count > challengesCount) {
+        count = challengesCount - startIndex;
+      }
 
-    // use multicall to get all the challenges
-    const challenges = (
-      await this.publicClient.multicall({
-        contracts: Array.from({ length: count }, (_, i) => ({
-          address: this.escrowAddress,
-          abi: escrowAbi,
-          functionName: "getChallenge",
-          args: [BigInt(startIndex + i)],
-        })),
-        multicallAddress: this.multicallAddress,
-      })
-    )
-      .filter((challenge) => challenge.status === "success")
-      .map(({ result: challenge }) => challenge as any);
+      // use multicall to get all the challenges
+      const challenges = (
+        await this.publicClient.multicall({
+          contracts: Array.from({ length: count }, (_, i) => ({
+            address: this.escrowAddress,
+            abi: escrowAbi,
+            functionName: "getChallenge",
+            args: [BigInt(startIndex + i)],
+          })),
+          multicallAddress: this.multicallAddress,
+        })
+      )
+        .filter((challenge) => challenge.status === "success")
+        .map(({ result: challenge }) => challenge as any);
 
-    const data: Challenge[] = await Promise.all(
-      challenges.map(async (challenge, index) => {
-        const metadata = (await this.ipfsClient.downloadJSON(
-          challenge.metadataUri
-        )) as any;
+      const data: Challenge[] = await Promise.all(
+        challenges.map(async (challenge, index) => {
+          const metadata = (await this.ipfsClient.downloadJSON(
+            challenge.metadataUri
+          )) as any;
 
-        return {
-          id: Number(startIndex + index),
-          status:
-            CHALLENGE_STATUS_MAP[
-              challenge.status as keyof typeof CHALLENGE_STATUS_MAP
-            ],
-          endsAt: new Date(Number(challenge.endsAt) * 1000),
-          createdAt: new Date(Number(challenge.createdAt) * 1000),
-          poolSize: challenge.poolSize,
-          metadata: {
-            title: metadata.title,
-            description: metadata.description,
-          },
-          admin: challenge.admin,
-        };
+          return {
+            id: Number(startIndex + index),
+            status:
+              CHALLENGE_STATUS_MAP[
+                challenge.status as keyof typeof CHALLENGE_STATUS_MAP
+              ],
+            endsAt: new Date(Number(challenge.endsAt) * 1000),
+            createdAt: new Date(Number(challenge.createdAt) * 1000),
+            poolSize: challenge.poolSize,
+            metadata: {
+              title: metadata.title,
+              description: metadata.description,
+            },
+            admin: challenge.admin,
+          };
         })
       );
       return data;
@@ -215,15 +215,13 @@ export class EscrowService {
     };
   }
 
-  async recoverChallengeId(logs: Log[]): Promise<bigint> {
+  async recoverChallengeId(logs: Log[]): Promise<number> {
     // Find and decode the matching log
     const [challengeCreatedTopic] = encodeEventTopics({
       abi: escrowAbi,
       eventName: "ChallengeCreated",
     });
-    const log = logs.find(
-      (log) => log.topics[0] === challengeCreatedTopic
-    );
+    const log = logs.find((log) => log.topics[0] === challengeCreatedTopic);
     if (!log) throw new Error("Log not found");
 
     const decoded = decodeEventLog({
@@ -232,7 +230,7 @@ export class EscrowService {
       topics: log.topics,
     });
 
-    return (decoded.args as any).challengeId;
+    return Number((decoded.args as any).challengeId);
   }
 
   async prepareResolveChallenge(
@@ -243,7 +241,7 @@ export class EscrowService {
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "resolveChallenge",
-        args: [params.challengeId, params.winners, params.ineligible],
+        args: [BigInt(params.challengeId), params.winners, params.ineligible],
       }),
       value: 0n,
     };
@@ -261,25 +259,18 @@ export class EscrowService {
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "createSubmission",
-        args: [params.challengeId, params.contact, submissionURI],
+        args: [BigInt(params.challengeId), params.contact, submissionURI],
       }),
       value: 0n,
     };
   }
 
-  async recoverSubmissionId(txHash: `0x${string}`): Promise<bigint> {
-    const receipt = await this.publicClient.waitForTransactionReceipt({
-      hash: txHash,
-    });
-
-    // Find and decode the matching log
+  async recoverSubmissionId(logs: Log[]): Promise<number> {
     const [submissionCreatedTopic] = encodeEventTopics({
       abi: escrowAbi,
       eventName: "SubmissionCreated",
     });
-    const log = receipt.logs.find(
-      (log) => log.topics[0] === submissionCreatedTopic
-    );
+    const log = logs.find((log) => log.topics[0] === submissionCreatedTopic);
     if (!log) throw new Error("Log not found");
 
     const decoded = decodeEventLog({
@@ -288,7 +279,7 @@ export class EscrowService {
       topics: log.topics,
     });
 
-    return (decoded.args as any).submissionId;
+    return Number((decoded.args as any).submissionId);
   }
 
   async getSubmissionsCount(challengeId: bigint): Promise<number> {
@@ -412,7 +403,7 @@ export class EscrowService {
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "claim",
-        args: [params.challengeId],
+        args: [BigInt(params.challengeId)],
       }),
       value: 0n,
     };

@@ -46,6 +46,18 @@ export class Erc20Service {
     };
   }
 
+  async prepareTransfer(amount: bigint, to: `0x${string}`): Promise<TxParameters> {
+    return {
+      to: this.erc20Address,
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [to, amount],
+      }),
+      value: 0n,
+    };
+  }
+
   async prepareMint(amount: bigint, to: `0x${string}`): Promise<TxParameters> {
     return {
       to: this.erc20Address,
