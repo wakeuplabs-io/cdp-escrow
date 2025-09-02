@@ -341,7 +341,7 @@ export const AccountManager = () => {
   }, [evmAddress]);
 
   const currentTab = useMemo(() => {
-    if (!evmAddress || !balance) {
+    if (!evmAddress) {
       return {
         title: "",
         description: "",
@@ -354,7 +354,7 @@ export const AccountManager = () => {
         title: "Your account",
         description: "Your account address is ready to be used.",
         content: (
-          <Account setTab={setTab} address={evmAddress} balance={balance} />
+          <Account setTab={setTab} address={evmAddress} balance={balance ?? 0n} />
         ),
       },
       [Tab.Deposit]: {
