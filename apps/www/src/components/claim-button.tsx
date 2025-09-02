@@ -14,7 +14,7 @@ export const ClaimButton: React.FC<{
 
   const onClaim = useCallback(() => {
     claim({ challengeId: challenge.id });
-  }, [challenge.id]);
+  }, [challenge.id, claim]);
 
   const isAdmin = useMemo(() => {
     return challenge.admin === evmAddress;

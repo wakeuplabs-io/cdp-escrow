@@ -76,7 +76,7 @@ export const ChallengeStatusBadge: React.FC<{
 export const SubmissionStatusBadge: React.FC<{
   status: SubmissionStatus;
   className?: string;
-}> = ({ status, className }) => {
+}> = ({ status }) => {
 
   const icon = {
     awarded: <StarIcon className="w-2 h-2 fill-white" />,
