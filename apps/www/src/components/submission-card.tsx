@@ -34,7 +34,7 @@ export const SubmissionCard = ({
   onMarkAsAcceptable: () => void;
 }) => {
   return (
-    <div className="w-full">
+    <div className="w-full py-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Image
@@ -110,7 +110,7 @@ export const SubmissionCard = ({
         </div>
       </div>
 
-      <div className="prose prose-sm max-w-2xl py-4">
+      <div className="prose prose-sm max-w-2xl">
         <Markdown>{submission.metadata.description}</Markdown>
       </div>
     </div>

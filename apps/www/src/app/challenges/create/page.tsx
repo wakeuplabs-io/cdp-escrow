@@ -13,10 +13,10 @@ import { cn } from "@/lib/utils";
 import { challengeMetadataSchema } from "@cdp/common/src/types/challenge";
 import {
   ChevronDownIcon,
-  Link,
   MoveLeftIcon,
   SendHorizontalIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";

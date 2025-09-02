@@ -82,7 +82,6 @@ export const useCreateSubmission = () => {
   return useMutation({
     mutationFn: async (props: CreateSubmissionParams) => {
       const smartAccount = currentUser?.evmSmartAccounts?.[0];
-
       if (!smartAccount) {
         throw new Error("No smart account found");
       }
@@ -99,20 +98,10 @@ export const useCreateSubmission = () => {
       const submissionId = await escrowService.recoverSubmissionId(
         receipt.logs
       );
-      const submission = await escrowService.getSubmissionById(
-        BigInt(props.challengeId),
-        BigInt(submissionId)
-      );
 
-      // Update cache
-      queryClient.setQueryData(
-        QueryKeyFactory.submissions(props.challengeId),
-        (old: Submission[] = []) => {
-          return [...old, submission];
-        }
-      );
+      queryClient.invalidateQueries({ queryKey: QueryKeyFactory.submissions(props.challengeId) });
 
-      return { submission, userOperationHash: result.userOperationHash };
+      return { submissionId, userOperationHash: result.userOperationHash };
     },
   });
 };

@@ -190,7 +190,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 </div>
               ) : (
-                <div className="divide-y py-6 pb-8 pt-0">
+                <div className="divide-y pb-8 -pt-6">
                   {sortedSubmissions.map((submission) => (
                     <SubmissionCard
                       key={submission.id}

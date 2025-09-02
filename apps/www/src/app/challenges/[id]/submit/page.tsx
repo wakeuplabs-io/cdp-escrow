@@ -6,7 +6,8 @@ import { useCreateSubmission } from "@/hooks/submissions";
 import { cn } from "@/lib/utils";
 import { submissionMetadataSchema } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
-import { Link, MoveLeftIcon, SendHorizontalIcon } from "lucide-react";
+import { MoveLeftIcon, SendHorizontalIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
@@ -51,14 +52,17 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const validation = useMemo(() => {
     if (!contact) {
       return { isValid: false, errors: ["Contact is required"] };
-    } else if (challenge?.status !== "active") {
+    }
+    if (challenge?.status !== "active") {
       return { isValid: false, errors: ["Challenge is not active"] };
-    } else if (challenge?.admin === evmAddress) {
+    }
+    if (challenge?.admin === evmAddress) {
       return {
         isValid: false,
         errors: ["You are the admin of this challenge"],
       };
-    } else if (!evmAddress) {
+    }
+    if (!evmAddress) {
       return { isValid: false, errors: ["Please connect your wallet"] };
     }
 
