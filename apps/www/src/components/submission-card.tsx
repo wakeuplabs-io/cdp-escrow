@@ -1,14 +1,11 @@
-import { cn, shortenAddress } from "@/lib/utils";
+import { shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import {
-  BanIcon,
-  CheckIcon,
-  EllipsisVerticalIcon,
-  TrophyIcon,
+  EllipsisVerticalIcon
 } from "lucide-react";
 import Image from "next/image";
 import Markdown from "react-markdown";
-import { Tooltip } from "react-tooltip";
+import { SubmissionStatusBadge } from "./status-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,36 +44,7 @@ export const SubmissionCard = ({
           <div>
             <div className="flex items-center gap-2">
               <span>{shortenAddress(submission.creator)}</span>
-              <span
-                data-tooltip-id="submission-status-tooltip"
-                className={cn(
-                  "text-xs rounded-full px-1.5 py-0.5 text-white font-medium",
-                  isWinner
-                    ? "bg-green-500"
-                    : isIneligible
-                    ? "bg-red-500"
-                    : "bg-yellow-500"
-                )}
-              >
-                {isWinner ? (
-                  <TrophyIcon className="w-3 h-3" />
-                ) : isIneligible ? (
-                  <BanIcon className="w-3 h-3" />
-                ) : (
-                  <CheckIcon className="w-3 h-3" />
-                )}
-              </span>
-
-              <Tooltip
-                id="submission-status-tooltip"
-                content={
-                  isWinner
-                    ? "Winner"
-                    : isIneligible
-                    ? "Ineligible"
-                    : "Acceptable"
-                }
-              />
+              <SubmissionStatusBadge status={isWinner ? "awarded" : isIneligible ? "ineligible" : "accepted"} />
             </div>
             <div className="text-xs text-muted-foreground space-x-2">
               {submission.createdAt.toLocaleDateString()} · #{submission.id}

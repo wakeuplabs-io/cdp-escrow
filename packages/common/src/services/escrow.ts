@@ -388,6 +388,26 @@ export class EscrowService {
     return data;
   }
 
+  async getWinnerSubmissions(challengeId: number): Promise<bigint[]> {
+    const winners = await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "getWinnerSubmissions",
+      args: [BigInt(challengeId)],
+    });
+    return winners as bigint[];
+  }
+
+  async getIneligibleSubmissions(challengeId: number): Promise<bigint[]> {
+    const ineligible = await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "getIneligibleSubmissions",
+      args: [BigInt(challengeId)],
+    });
+    return ineligible as bigint[];
+  }
+
   async getClaimable(challengeId: bigint, address: Address): Promise<bigint> {
     return await this.publicClient.readContract({
       address: this.escrowAddress,

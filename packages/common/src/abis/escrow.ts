@@ -348,6 +348,25 @@ export const escrowAbi = [
         name: "challengeId",
         type: "uint256",
       },
+    ],
+    name: "getIneligibleSubmissions",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "challengeId",
+        type: "uint256",
+      },
       {
         internalType: "uint256",
         name: "submissionId",
@@ -437,6 +456,25 @@ export const escrowAbi = [
         internalType: "struct IEscrowStructs.UserSubmission[]",
         name: "",
         type: "tuple[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "challengeId",
+        type: "uint256",
+      },
+    ],
+    name: "getWinnerSubmissions",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",

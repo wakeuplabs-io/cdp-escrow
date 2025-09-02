@@ -10,8 +10,8 @@ import { Button } from "./ui/button";
 export const ResolveButton: React.FC<{
   challenge: Challenge;
   submissions: Submission[];
-  winners: string[];
-  ineligible: string[];
+  winners: bigint[];
+  ineligible: bigint[];
 }> = ({ challenge, submissions, winners, ineligible }) => {
   const { evmAddress } = useEvmAddress();
   const { mutateAsync: resolveChallenge, isPending: isResolvingChallenge } =
@@ -34,8 +34,8 @@ export const ResolveButton: React.FC<{
 
     resolveChallenge({
       challengeId: challenge.id,
-      winners: winners.map((winner) => BigInt(winner)),
-      ineligible: ineligible.map((ineligible) => BigInt(ineligible)),
+      winners,
+      ineligible,
     }).then(({ userOperationHash }) => {
       toast.success("Challenge resolved successfully with user operation hash: " + userOperationHash);
     });

@@ -50,6 +50,12 @@ interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
     /// @notice Get the submission id for a user
     function getUserSubmissions(address user) external view returns (UserSubmission[] memory);
 
+    /// @notice Get the winner submissions for a challenge
+    function getWinnerSubmissions(uint256 challengeId) external view returns (uint256[] memory);
+
+    /// @notice Get the ineligible submissions for a challenge
+    function getIneligibleSubmissions(uint256 challengeId) external view returns (uint256[] memory);
+
     /// @notice Owner calls this function to resolve a challenge
     function resolveChallenge(
         uint256 challengeId,

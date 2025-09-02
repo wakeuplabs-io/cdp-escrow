@@ -24,4 +24,9 @@ export const QueryKeyFactory = {
     challengeId,
     user,
   ],
+  winnerSubmissions: (challengeId: number) => ["winner-submissions", challengeId],
+  ineligibleSubmissions: (challengeId: number) => [
+    "ineligible-submissions",
+    challengeId,
+  ],
 };
