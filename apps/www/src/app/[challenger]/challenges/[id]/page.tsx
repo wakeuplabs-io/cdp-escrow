@@ -3,12 +3,15 @@
 import { AccountManager } from "@/components/account-manager";
 import { ClaimButton } from "@/components/claim-button";
 import { Logo } from "@/components/logo";
-import { ResolveButton } from "@/components/resolve-button";
 import { ChallengeStatusBadge } from "@/components/status-badge";
 import { SubmissionCard } from "@/components/submission-card";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
-import { useChallenge, useChallengerProfile } from "@/hooks/challenges";
+import {
+  useChallenge,
+  useChallengerProfile,
+  useResolveChallenge,
+} from "@/hooks/challenges";
 import { useCopyToClipboard } from "@/hooks/copy";
 import { useInfiniteScroll } from "@/hooks/infinite-scroll";
 import { useSubmissionCount, useSubmissions } from "@/hooks/submissions";
@@ -27,6 +30,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
+import { toast } from "sonner";
 import { Address, formatEther } from "viem";
 
 enum ActiveTab {
@@ -49,6 +53,8 @@ export default function Page({
     Number(id)
   );
   const { data: submissionCount } = useSubmissionCount(Number(id));
+  const { mutateAsync: resolveChallenge, isPending: isResolvingChallenge } =
+    useResolveChallenge();
   const {
     data: submissions,
     isPending: isSubmissionsPending,
@@ -63,6 +69,7 @@ export default function Page({
   // what the admin has selected
   const [selectedWinners, setSelectedWinners] = useState<bigint[]>([]);
   const [selectedIneligible, setSelectedIneligible] = useState<bigint[]>([]);
+  const [isPickingWinners, setIsPickingWinners] = useState(false);
 
   const onMarkAsWinner = useCallback(
     (submission: Submission) => {
@@ -100,6 +107,31 @@ export default function Page({
     [selectedIneligible, selectedWinners]
   );
 
+  const onResolve = useCallback(() => {
+    if (!challenge) return;
+
+    if (
+      selectedWinners.length > 0 &&
+      selectedIneligible.length > 0 &&
+      !window.confirm(
+        "You haven't pick any winners or ineligible submissions. The reward will be split equally between the remaining submissions. Are you sure?"
+      )
+    ) {
+      return;
+    }
+
+    resolveChallenge({
+      challengeId: challenge!.id,
+      winners: selectedWinners,
+      ineligible: selectedIneligible,
+    }).then(({ userOperationHash }) => {
+      toast.success(
+        "Challenge resolved successfully with user operation hash: " +
+          userOperationHash
+      );
+    });
+  }, [challenge, selectedWinners, selectedIneligible, resolveChallenge]);
+
   const timeString = useMemo(() => {
     if (!challenge) return "";
 
@@ -116,13 +148,21 @@ export default function Page({
       .sort((a, b) => b.id - a.id);
   }, [submissions]);
 
-  if (isChallengePending || !challenge)
+  const canResolve = useMemo(() => {
+    return (
+      challenge?.status === "pending" &&
+      sortedSubmissions.length > 0 &&
+      evmAddress === challenge.admin
+    );
+  }, [challenge, sortedSubmissions, evmAddress]);
+
+  if (isChallengePending || !challenge) {
     return (
       <div className="flex items-center justify-center h-full w-full p-10">
         Loading...
       </div>
     );
-
+  }
   return (
     <div>
       <div className="flex border-b items-center justify-between h-[72px] px-14">
@@ -228,7 +268,7 @@ export default function Page({
                       <SubmissionCard
                         key={submission.id}
                         submission={submission}
-                        isAdmin={challenge.admin === evmAddress}
+                        isResolving={isPickingWinners}
                         isWinner={selectedWinners.includes(
                           BigInt(submission.id)
                         )}
@@ -349,23 +389,48 @@ export default function Page({
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-3 text-gray-600">
-              <MousePointerClickIcon className="h-4 w-4" />
+          {challenge.status !== "completed" && (
+            <div>
+              <div className="flex items-center gap-2 mb-3 text-gray-600">
+                <MousePointerClickIcon className="h-4 w-4" />
 
-              <span className="uppercase font-semibold text-sm">Actions</span>
+                <span className="uppercase font-semibold text-sm">Actions</span>
+              </div>
+
+              <div className="gap-2 flex flex-col">
+                <SubmitButton challenge={challenge} />
+                <ClaimButton challenge={challenge} />
+                {canResolve && (
+                  <Button
+                    variant="outline"
+                    className="rounded-full w-full"
+                    disabled={
+                      isResolvingChallenge || challenge.status !== "pending"
+                    }
+                    onClick={() => {
+                      if (isPickingWinners) {
+                        onResolve();
+                      } else {
+                        setActiveTab(ActiveTab.Submissions);
+                        setIsPickingWinners(true);
+                      }
+                    }}
+                  >
+                    {isResolvingChallenge
+                      ? "Resolving..."
+                      : challenge.status === "pending" &&
+                        sortedSubmissions.length === 0
+                      ? "No submissions. Claim funds back"
+                      : challenge.status === "completed"
+                      ? "Challenge already resolved"
+                      : !isPickingWinners
+                      ? "Pick winners and ineligible submissions"
+                      : "Resolve Challenge"}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="gap-2 flex flex-col">
-              <SubmitButton challenge={challenge} />
-              <ClaimButton challenge={challenge} />
-              <ResolveButton
-                challenge={challenge}
-                submissions={sortedSubmissions}
-                winners={selectedWinners}
-                ineligible={selectedIneligible}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

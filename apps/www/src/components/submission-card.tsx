@@ -1,19 +1,13 @@
-import { shortenAddress } from "@/lib/utils";
+import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
-import { EllipsisVerticalIcon } from "lucide-react";
+import { CheckIcon, StarIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Markdown from "react-markdown";
 import { SubmissionStatusBadge } from "./status-badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 
 export const SubmissionCard = ({
   submission,
-  isAdmin,
+  isResolving,
   isWinner,
   isIneligible,
   onMarkAsWinner,
@@ -21,7 +15,7 @@ export const SubmissionCard = ({
   onMarkAsAcceptable,
 }: {
   submission: Submission;
-  isAdmin: boolean;
+  isResolving: boolean;
   isWinner: boolean;
   isIneligible: boolean;
   onMarkAsWinner: () => void;
@@ -44,16 +38,20 @@ export const SubmissionCard = ({
           />
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{shortenAddress(submission.creator)}</span>
-              <SubmissionStatusBadge
-                status={
-                  awarded
-                    ? "awarded"
-                    : ineligible
-                    ? "ineligible"
-                    : submission.status
-                }
-              />
+              <span className="text-sm font-medium">
+                {shortenAddress(submission.creator)}
+              </span>
+              {!isResolving && (
+                <SubmissionStatusBadge
+                  status={
+                    awarded
+                      ? "awarded"
+                      : ineligible
+                      ? "ineligible"
+                      : submission.status
+                  }
+                />
+              )}
             </div>
             <div className="text-xs text-muted-foreground space-x-2">
               #{submission.id} on {submission.createdAt.toLocaleDateString()} by{" "}
@@ -62,33 +60,37 @@ export const SubmissionCard = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              disabled={!isAdmin || awarded || ineligible}
-              asChild
-            >
-              <button className="disabled:opacity-50 disabled:cursor-not-allowed">
-                <EllipsisVerticalIcon className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="start" side="left">
-              {isAdmin && (
-                <>
-                  <DropdownMenuItem onClick={onMarkAsIneligible}>
-                    Mark as Ineligible
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onMarkAsWinner}>
-                    Mark as Winner
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onMarkAsAcceptable}>
-                    Mark as Acceptable
-                  </DropdownMenuItem>
-                </>
+        {isResolving && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onMarkAsWinner}
+              className={cn(
+                "text-green-500 rounded-full border border-green-500 h-7 w-7 flex items-center justify-center",
+                { "bg-green-500/10": isWinner }
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            >
+              <StarIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onMarkAsIneligible}
+              className={cn(
+                "text-red-500 rounded-full border border-red-500 h-7 w-7 flex items-center justify-center",
+                { "bg-red-500/10": isIneligible }
+              )}
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onMarkAsAcceptable}
+              className={cn(
+                "text-zinc-500 rounded-full border border-zinc-500 h-7 w-7 flex items-center justify-center",
+                { "bg-zinc-500/10": !isWinner && !isIneligible }
+              )}
+            >
+              <CheckIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="prose prose-sm max-w-none">

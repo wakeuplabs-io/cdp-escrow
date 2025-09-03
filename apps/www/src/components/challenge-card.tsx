@@ -30,7 +30,7 @@ export const ChallengeCard: React.FC<{
         </div>
 
         <div className="text-muted-foreground text-sm">
-          #{challenge.id} by {shortenAddress(challenge.admin)} · {timeString}
+          #{challenge.id} by {shortenAddress(challenge.admin)} {timeString}
         </div>
       </div>
 
