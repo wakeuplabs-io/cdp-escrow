@@ -5,7 +5,6 @@ import { Challenge } from "@cdp/common/src/types/challenge";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { Tooltip } from "react-tooltip";
 import { Button } from "./ui/button";
 
 export const SubmitButton: React.FC<{
@@ -22,17 +21,15 @@ export const SubmitButton: React.FC<{
     return challenge.admin === evmAddress;
   }, [challenge.admin, evmAddress]);
 
+  const hasSubmission = useMemo(
+    () =>
+      userSubmissions?.some(
+        (submission) => submission.challengeId === challenge.id
+      ),
+    [userSubmissions, challenge.id]
+  );
+
   const validation = useMemo(() => {
-    const hasSubmission = userSubmissions?.some(
-      (submission) => submission.challengeId === challenge.id
-    );
-
-    if (hasSubmission)
-      return {
-        isValid: false,
-        message: "You have already submitted",
-      };
-
     if (challenge.status !== "active")
       return {
         isValid: false,
@@ -40,27 +37,20 @@ export const SubmitButton: React.FC<{
       };
 
     return { isValid: true, message: "" };
-  }, [userSubmissions, challenge]);
+  }, [challenge]);
 
   if (isAdmin) return null;
   return (
-    <>
-      <div data-tooltip-id="submit-solution-tooltip" className="w-full">
-        <Button
-          variant="outline"
-          disabled={!validation.isValid}
-          onClick={() => {
-            router.push(`/challenges/${challenge.id}/submit`);
-          }}
-          className="w-full rounded-full"
-        >
-          Submit your solution
-        </Button>
-      </div>
-
-      {!validation.isValid && (
-        <Tooltip id="submit-solution-tooltip" content={validation.message} />
-      )}
-    </>
+    <Button
+      variant="outline"
+      tooltip={!validation.isValid ? validation.message : undefined}
+      disabled={!validation.isValid || hasSubmission}
+      onClick={() => {
+        router.push(`/${challenge.admin}/challenges/${challenge.id}/submit`);
+      }}
+      className="w-full rounded-full"
+    >
+      {hasSubmission ? "Already submitted" : "Submit your solution"}
+    </Button>
   );
 };

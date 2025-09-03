@@ -60,18 +60,27 @@ export default function ChallengesPage({
 
       {profile ? (
         <div>
-          <div className="py-10 border-b relative bg-[url('/avatar.webp')] bg-cover bg-center">
+          <div
+            className="py-10 border-b relative bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${
+                profile.logoURI === "" ? "/avatar.webp" : profile.logoURI
+              })`,
+            }}
+          >
             <div className="absolute inset-0 backdrop-blur-3xl bg-black/30"></div>
 
-            <div className="max-w-5xl mx-auto flex items-center justify-end gap-2">
-              <CreateChallengeButton />
-
+            <div className="max-w-5xl mx-auto flex items-center justify-end gap-2 z-40 h-10">
               {isProfileAdmin && (
-                <EditProfile profile={profile}>
-                  <button className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center z-10 bg-white">
-                    <SettingsIcon className="h-4 w-4" />
-                  </button>
-                </EditProfile>
+                <>
+                  <CreateChallengeButton className="z-10" />
+
+                  <EditProfile profile={profile}>
+                    <button className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center z-10 bg-white">
+                      <SettingsIcon className="h-4 w-4" />
+                    </button>
+                  </EditProfile>
+                </>
               )}
             </div>
           </div>

@@ -33,7 +33,7 @@ const CDP_CONFIG: Config = {
 
 const APP_CONFIG: AppConfig = {
   name: "CDP Example 2",
-  logoUrl: "/icon.svg",
+  logoUrl: "/favicon.ico",
   authMethods: ["email", "sms"],
 };
 

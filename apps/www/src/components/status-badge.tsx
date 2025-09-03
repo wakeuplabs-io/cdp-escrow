@@ -49,7 +49,7 @@ export const ChallengeStatusBadge: React.FC<{
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-full mb-6 text-white px-2 pr-3 py-1 w-min text-nowrap",
+        "flex items-center gap-2 rounded-full text-white px-2 pr-3 py-1 w-min text-nowrap",
         status === "active"
           ? "bg-green-500"
           : status === "pending"
@@ -72,7 +72,7 @@ export const SubmissionStatusBadge: React.FC<{
     awarded: <StarIcon className="w-2 h-2 fill-white" />,
     ineligible: <XIcon className="w-2 h-2" />,
     accepted: <CheckIcon className="w-2 h-2" />,
-    pending: <ClockIcon className="w-2 h-2" />,
+    pending: <ClockIcon className="w-3 h-3" />,
   } as const;
 
   const bgColor = {
@@ -86,7 +86,7 @@ export const SubmissionStatusBadge: React.FC<{
     awarded: "Winner",
     ineligible: "Ineligible",
     accepted: "Accepted",
-    pending: "Pending",
+    pending: "Pending Admin Resolution",
   } as const;
 
   return (

@@ -3,7 +3,6 @@ import { Challenge } from "@cdp/common/src/types/challenge";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { useCallback, useMemo } from "react";
-import { Tooltip } from "react-tooltip";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 
@@ -37,35 +36,29 @@ export const ResolveButton: React.FC<{
       winners,
       ineligible,
     }).then(({ userOperationHash }) => {
-      toast.success("Challenge resolved successfully with user operation hash: " + userOperationHash);
+      toast.success(
+        "Challenge resolved successfully with user operation hash: " +
+          userOperationHash
+      );
     });
   }, [challenge.id, winners, ineligible, resolveChallenge]);
 
   // only admins can resolve challenges
   if (!isAdmin) return null;
   return (
-    <>
-      <div data-tooltip-id="resolve-button-tooltip">
-        <Button
-          variant="outline"
-          className="rounded-full w-full"
-          disabled={isResolvingChallenge || challenge.status !== "pending"}
-          onClick={onClaim}
-        >
-          {isResolvingChallenge
-            ? "Resolving..."
-            : submissions.length === 0
-            ? "No submissions. Claim funds back"
-            : "Resolve Challenge"}
-        </Button>
-      </div>
-
-      {challenge.status === "completed" && (
-        <Tooltip
-          id="resolve-button-tooltip"
-          content="Challenge already resolved"
-        />
-      )}
-    </>
+    <Button
+      variant="outline"
+      className="rounded-full w-full"
+      disabled={isResolvingChallenge || challenge.status !== "pending"}
+      onClick={onClaim}
+    >
+      {isResolvingChallenge
+        ? "Resolving..."
+        : challenge.status === "pending" && submissions.length === 0
+        ? "No submissions. Claim funds back"
+        : challenge.status === "completed"
+        ? "Challenge already resolved"
+        : "Resolve Challenge"}
+    </Button>
   );
 };

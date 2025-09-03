@@ -7,32 +7,44 @@ import { ResolveButton } from "@/components/resolve-button";
 import { ChallengeStatusBadge } from "@/components/status-badge";
 import { SubmissionCard } from "@/components/submission-card";
 import { SubmitButton } from "@/components/submit-button";
-import { useChallenge } from "@/hooks/challenges";
+import { Button } from "@/components/ui/button";
+import { useChallenge, useChallengerProfile } from "@/hooks/challenges";
+import { useCopyToClipboard } from "@/hooks/copy";
+import { useInfiniteScroll } from "@/hooks/infinite-scroll";
 import { useSubmissionCount, useSubmissions } from "@/hooks/submissions";
 import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { formatDistanceToNow } from "date-fns";
-import { ClockIcon, DollarSignIcon, MousePointerClickIcon } from "lucide-react";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import {
+  CheckIcon,
+  ClockIcon,
+  DollarSignIcon,
+  LinkIcon,
+  MousePointerClickIcon,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
-import { formatEther } from "viem";
+import { Address, formatEther } from "viem";
 
 enum ActiveTab {
   Overview = "overview",
   Submissions = "submissions",
 }
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params);
+export default function Page({
+  params,
+}: {
+  params: Promise<{ id: string; challenger: Address }>;
+}) {
+  const { id, challenger } = React.use(params);
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Overview);
 
+  const { evmAddress } = useEvmAddress();
+  const { data: profile } = useChallengerProfile(challenger);
+  const { copyToClipboard, copied } = useCopyToClipboard();
   const { data: challenge, isPending: isChallengePending } = useChallenge(
     Number(id)
   );
@@ -43,7 +55,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     fetchNextPage,
     hasNextPage,
   } = useSubmissions(Number(id));
-  const { evmAddress } = useEvmAddress();
+  const loadMoreRef = useInfiniteScroll<HTMLDivElement>(
+    fetchNextPage,
+    hasNextPage
+  );
 
   // what the admin has selected
   const [selectedWinners, setSelectedWinners] = useState<bigint[]>([]);
@@ -85,22 +100,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     [selectedIneligible, selectedWinners]
   );
 
-  // infinite scroll
-  const loadMoreRef = useRef(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 1.0 }
-    );
-
-    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage]);
-
   const timeString = useMemo(() => {
     if (!challenge) return "";
 
@@ -126,7 +125,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div>
-      <div className="flex border-b items-center justify-between h-[72px] px-6">
+      <div className="flex border-b items-center justify-between h-[72px] px-14">
         <Logo width={150} height={46} />
 
         <AccountManager />
@@ -136,7 +135,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         {/* Main content */}
         <div className="min-h-screen flex-1">
           {/* Tabs navigation */}
-          <div className="border-b w-full px-5 flex ">
+          <div className="border-b w-full px-10 flex ">
             <button
               className={cn(
                 "px-3 py-2 uppercase text-muted-foreground text-xs font-bold",
@@ -162,44 +161,90 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </button>
           </div>
 
-          <div className="px-10 pt-12 pb-20 w-full">
+          <div className="px-24 pt-12 pb-20 w-full">
             <div>
               {activeTab === ActiveTab.Overview ? (
-                <div className="max-w-2xl">
+                <div className="">
                   <h1 className="text-4xl break-words font-bold mb-4">
                     {challenge.metadata.title}
                   </h1>
 
                   <ChallengeStatusBadge status={challenge.status} />
 
-                  <div className="prose prose-sm max-w-2xl">
+                  <div className="flex items-center justify-between py-8">
+                    <Link
+                      href={`/${challenge.admin}/challenges`}
+                      className="flex items-center gap-2"
+                    >
+                      <Image
+                        src={
+                          !profile || profile?.logoURI === ""
+                            ? "/avatar.webp"
+                            : profile?.logoURI!
+                        }
+                        alt="avatar"
+                        className="rounded-full border-2 border-gray-200"
+                        width={32}
+                        height={32}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          {!profile || profile?.name == ""
+                            ? shortenAddress(challenge.admin)
+                            : profile?.name}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {formatDistanceToNow(challenge.createdAt)} ago
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <Button
+                      tooltip="Copy link"
+                      variant="outline"
+                      className="rounded-full h-8 w-8"
+                      onClick={() => copyToClipboard(window.location.href)}
+                    >
+                      {copied ? <CheckIcon /> : <LinkIcon />}
+                    </Button>
+                  </div>
+
+                  <div className="prose prose-sm max-w-none">
                     <Markdown>{challenge.metadata.description}</Markdown>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
                     <span>{submissionCount} submissions</span>
                     <span>·</span>
-                    <span>by {shortenAddress(challenge.admin)}</span>
-                    <span>·</span>
                     <span>{timeString}</span>
                   </div>
                 </div>
               ) : (
-                <div className="divide-y pb-8 -pt-6">
-                  {sortedSubmissions.map((submission) => (
-                    <SubmissionCard
-                      key={submission.id}
-                      submission={submission}
-                      isAdmin={challenge.admin === evmAddress}
-                      isWinner={selectedWinners.includes(BigInt(submission.id))}
-                      isIneligible={selectedIneligible.includes(
-                        BigInt(submission.id)
-                      )}
-                      onMarkAsWinner={() => onMarkAsWinner(submission)}
-                      onMarkAsIneligible={() => onMarkAsIneligible(submission)}
-                      onMarkAsAcceptable={() => onMarkAsAcceptable(submission)}
-                    />
-                  ))}
+                <div className="pb-8 -pt-6">
+                  <div className="divide-y">
+                    {sortedSubmissions.map((submission) => (
+                      <SubmissionCard
+                        key={submission.id}
+                        submission={submission}
+                        isAdmin={challenge.admin === evmAddress}
+                        isWinner={selectedWinners.includes(
+                          BigInt(submission.id)
+                        )}
+                        isIneligible={selectedIneligible.includes(
+                          BigInt(submission.id)
+                        )}
+                        onMarkAsWinner={() => onMarkAsWinner(submission)}
+                        onMarkAsIneligible={() =>
+                          onMarkAsIneligible(submission)
+                        }
+                        onMarkAsAcceptable={() =>
+                          onMarkAsAcceptable(submission)
+                        }
+                      />
+                    ))}
+                  </div>
 
                   <div
                     ref={loadMoreRef}
@@ -208,13 +253,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       sortedSubmissions.length === 0 && "py-0"
                     )}
                   >
-                    {isSubmissionsPending
-                      ? "Loading more..."
-                      : hasNextPage
-                      ? "Load more."
-                      : sortedSubmissions.length === 0
-                      ? "No submissions yet."
-                      : "No more submissions."}
+                    {isSubmissionsPending && <div>Loading more...</div>}
+                    {!isSubmissionsPending &&
+                      sortedSubmissions.length === 0 && (
+                        <div>No submissions yet.</div>
+                      )}
                   </div>
                 </div>
               )}
@@ -312,7 +355,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
               <span className="uppercase font-semibold text-sm">Actions</span>
             </div>
-            <div className="space-y-2">
+            <div className="gap-2 flex flex-col">
               <SubmitButton challenge={challenge} />
               <ClaimButton challenge={challenge} />
               <ResolveButton
