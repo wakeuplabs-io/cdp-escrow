@@ -21,7 +21,7 @@ export const mintCommand = new Command("mint")
       config.rpcUrl
     );
 
-    console.log(`⚡ Minting ${options.amount} wei tokens to ${options.to}...`);
+    console.log(`⚡ Minting ${options.amount} tokens to ${options.to}...`);
     const mintTx = await erc20Service.prepareMint(
       parseEther(options.amount),
       options.to

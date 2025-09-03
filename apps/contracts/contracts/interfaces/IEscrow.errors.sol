@@ -84,4 +84,10 @@ interface IEscrowErrors {
      * @dev Prevents users from resolving a challenge with an invalid submission count
      */
     error InvalidSubmissionCount();
+
+    /**
+     * @notice Thrown when a user attempts to register with an invalid name
+     * @dev Prevents users from registering with an invalid name
+     */
+    error ChallengerNotRegistered();
 }

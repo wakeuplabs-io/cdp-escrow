@@ -3,7 +3,11 @@ import {
   CreateChallengeParams,
   ResolveChallengeParams,
 } from "@cdp/common/src/services/escrow";
-import { Challenge } from "@cdp/common/src/types/challenge";
+import {
+  Challenge,
+  ChallengerProfile,
+  SetChallengerProfile,
+} from "@cdp/common/src/types/challenge";
 import { useCurrentUser, useSendUserOperation } from "@coinbase/cdp-hooks";
 import {
   useInfiniteQuery,
@@ -11,6 +15,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { Address } from "viem";
 import { escrowService, NETWORK } from "../config";
 import { QueryKeyFactory } from "../lib/queries";
 
@@ -21,9 +26,49 @@ export const useChallenge = (id: number) => {
   });
 };
 
-export const useChallenges = () => {
+export const useChallengerProfile = (challenger?: Address | "all") => {
+  return useQuery({
+    queryKey: QueryKeyFactory.challenger(challenger as Address),
+    queryFn: (): Promise<ChallengerProfile | null> =>
+      challenger === "all"
+        ? Promise.resolve(null)
+        : escrowService.getChallengerProfile(challenger as Address),
+  });
+};
+
+export const useSetChallengerProfile = () => {
+  const { currentUser } = useCurrentUser();
+  const { sendUserOperation } = useSendUserOperation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (profile: SetChallengerProfile) => {
+      const smartAccount = currentUser?.evmSmartAccounts?.[0];
+      if (!smartAccount) {
+        throw new Error("No smart account found");
+      }
+
+      const result = await sendUserOperation({
+        evmSmartAccount: smartAccount,
+        network: NETWORK,
+        calls: [await escrowService.prepareSetProfile(profile)],
+        useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
+      });
+
+      queryClient.setQueryData(
+        QueryKeyFactory.challenger(smartAccount),
+        (old: ChallengerProfile | null) =>
+          old ? { ...old, ...profile } : { ...profile, verified: false }
+      );
+
+      return result.userOperationHash;
+    },
+  });
+};
+
+export const useChallenges = (challenger: Address | "all") => {
   return useInfiniteQuery({
-    queryKey: QueryKeyFactory.challenges(),
+    queryKey: QueryKeyFactory.challenges(challenger),
     queryFn: async ({
       pageParam,
     }): Promise<{
@@ -31,10 +76,13 @@ export const useChallenges = () => {
       hasNextPage: boolean;
       nextPage: number;
     }> => {
-      const count = await escrowService.getChallengesCount();
+      const count = await escrowService.getChallengesCount(
+        challenger === "all" ? undefined : challenger
+      );
       const challenges = await escrowService.getChallengesPaginated(
         pageParam * 10,
-        10
+        10,
+        challenger === "all" ? undefined : challenger
       );
 
       return {
@@ -69,18 +117,24 @@ export const useCreateChallenge = () => {
           await escrowService.prepareApprove({
             amount: props.poolSize,
           }),
-          await escrowService.prepareCreateChallenge(props)
+          await escrowService.prepareCreateChallenge(props),
         ],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
 
       // recover challenge id
-      const receipt = await bundlerClient.waitForUserOperationReceipt({ hash: result.userOperationHash });
+      const receipt = await bundlerClient.waitForUserOperationReceipt({
+        hash: result.userOperationHash,
+      });
       const challengeId = await escrowService.recoverChallengeId(receipt.logs);
 
       // invalidate cached queries
-      queryClient.invalidateQueries({ queryKey: QueryKeyFactory.challenge(challengeId) });
-      queryClient.invalidateQueries({ queryKey: QueryKeyFactory.challenges() });
+      queryClient.invalidateQueries({
+        queryKey: QueryKeyFactory.challenges(smartAccount),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QueryKeyFactory.challenges(),
+      });
 
       return challengeId;
     },
@@ -105,10 +159,15 @@ export const useResolveChallenge = () => {
         calls: [await escrowService.prepareResolveChallenge(props)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
-      await bundlerClient.waitForUserOperationReceipt({ hash: result.userOperationHash });
+      await bundlerClient.waitForUserOperationReceipt({
+        hash: result.userOperationHash,
+      });
 
       const challenge = await escrowService.getChallengeById(props.challengeId);
-      queryClient.setQueryData(QueryKeyFactory.challenge(props.challengeId), challenge);
+      queryClient.setQueryData(
+        QueryKeyFactory.challenge(props.challengeId),
+        challenge
+      );
 
       return { userOperationHash: result.userOperationHash };
     },

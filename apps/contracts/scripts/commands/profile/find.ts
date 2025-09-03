@@ -1,11 +1,14 @@
 import { EscrowService } from "@cdp/common/src/services/escrow";
 import { Command } from "commander";
-import { configByNetwork, ipfsClient } from "../../../config";
+import "dotenv/config";
+import {
+  configByNetwork,
+  ipfsClient,
+} from "../../../config";
 
-export const findChallengesCommand = new Command("find-challenges")
-  .description("Get all challenges")
-  .option("--start-index <number>", "The start index", "0")
-  .option("--count <number>", "The number of challenges", "10")
+export const findProfileCommand = new Command("find-profile")
+  .description("Get profile by address")
+  .option("--address <address>", "The address to get profile for")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
@@ -20,10 +23,9 @@ export const findChallengesCommand = new Command("find-challenges")
       config.rpcUrl
     );
 
-    // get challenges
-    const challenges = await escrowService.getChallengesPaginated(
-      Number(options.startIndex),
-      Number(options.count)
-    );
-    console.log(challenges);
+    console.log(`⚡ Getting profile...`);
+    const profile = await escrowService.getChallengerProfile(options.address);
+
+    console.log("🎉 Profile retrieved successfully!");
+    console.log("📝 Profile:", profile);
   });

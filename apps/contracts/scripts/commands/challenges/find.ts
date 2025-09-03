@@ -2,14 +2,15 @@ import { EscrowService } from "@cdp/common/src/services/escrow";
 import { Command } from "commander";
 import { configByNetwork, ipfsClient } from "../../../config";
 
-export const findChallengeByIdCommand = new Command("find-challenge")
-  .description("Get a challenge by ID")
-  .option("--challenge-id <string>", "The challenge ID")
+export const findChallengesCommand = new Command("find-challenges")
+  .description("Get all challenges")
+  .option("--start-index <number>", "The start index", "0")
+  .option("--count <number>", "The number of challenges", "10")
   .option("--network <string>", "The network to use", "base-sepolia")
   .action(async (options) => {
     const network = options.network as keyof typeof configByNetwork;
     const config = configByNetwork[network];
-   
+
     // instantiate services
     const escrowService = new EscrowService(
       ipfsClient,
@@ -19,14 +20,10 @@ export const findChallengeByIdCommand = new Command("find-challenge")
       config.rpcUrl
     );
 
-    // get challenge
-    const challenge = await escrowService.getChallengeById(
-      Number(options.challengeId)
+    // get challenges
+    const challenges = await escrowService.getChallengesPaginated(
+      Number(options.startIndex),
+      Number(options.count)
     );
-
-    if (challenge?.status === "completed") {
-      // TODO: get winners and ineligible submissions
-    }
-
-    console.log(challenge);
+    console.log(challenges);
   });

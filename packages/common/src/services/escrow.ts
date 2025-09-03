@@ -10,7 +10,7 @@ import {
   PublicClient,
 } from "viem";
 import { escrowAbi } from "../abis/escrow";
-import { Challenge } from "../types/challenge";
+import { Challenge, ChallengerProfile, SetChallengerProfile } from "../types/challenge";
 import { Submission, UserSubmission } from "../types/submission";
 import { TxParameters } from "../types/tx";
 import { IpfsClient } from "./ipfs";
@@ -70,7 +70,38 @@ export class EscrowService {
     });
   }
 
-  async getChallengesCount(): Promise<number> {
+  async prepareSetProfile(params: SetChallengerProfile) {
+    return {
+      to: this.escrowAddress,
+      data: encodeFunctionData({
+        abi: escrowAbi,
+        functionName: "setProfile",
+        args: [params.name, params.description, params.website, params.logoURI],
+      }),
+    };
+  }
+
+  async getChallengerProfile(address: Address): Promise<ChallengerProfile> {
+    const profile = await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "getProfile",
+      args: [address],
+    });
+    return profile as ChallengerProfile;
+  }
+
+  async getChallengesCount(challenger?: Address): Promise<number> {
+    if (challenger) {
+      const challenges = await this.publicClient.readContract({
+        address: this.escrowAddress,
+        abi: escrowAbi,
+        functionName: "getChallengerChallenges",
+        args: [challenger],
+      });
+      return challenges.length;
+    }
+
     const count = await this.publicClient.readContract({
       address: this.escrowAddress,
       abi: escrowAbi,
@@ -79,42 +110,13 @@ export class EscrowService {
     return Number(count);
   }
 
-  async getChallengeById(id: number): Promise<Challenge> {
-    const challenge = await this.publicClient.readContract({
-      address: this.escrowAddress,
-      abi: escrowAbi,
-      functionName: "getChallenge",
-      args: [BigInt(id)],
-    });
-    const endsAt = new Date(Number(challenge.endsAt) * 1000);
-
-    const metadata = (await this.ipfsClient.downloadJSON(
-      challenge.metadataUri
-    )) as any;
-
-    return {
-      id: Number(id),
-      status:
-        CHALLENGE_STATUS_MAP[
-          challenge.status as keyof typeof CHALLENGE_STATUS_MAP
-        ],
-      endsAt: endsAt,
-      createdAt: new Date(Number(challenge.createdAt) * 1000),
-      poolSize: challenge.poolSize,
-      metadata: {
-        title: metadata.title,
-        description: metadata.description,
-      },
-      admin: challenge.admin,
-    };
-  }
-
   async getChallengesPaginated(
     startIndex: number,
-    count: number
+    count: number,
+    challenger?: Address
   ): Promise<Challenge[]> {
     try {
-      const challengesCount = await this.getChallengesCount();
+      const challengesCount = await this.getChallengesCount(challenger);
       if (startIndex >= challengesCount) {
         return [];
       }
@@ -124,14 +126,24 @@ export class EscrowService {
         count = challengesCount - startIndex;
       }
 
+      const challengesIds = challenger
+        ? await this.publicClient.readContract({
+            address: this.escrowAddress,
+            abi: escrowAbi,
+            functionName: "getChallengerChallenges",
+            args: [challenger],
+          }).then((challenges) => challenges.map((challenge) => BigInt(challenge)))
+          .then((challenges) => challenges.slice(startIndex, startIndex + count))
+        : Array.from({ length: count }, (_, i) => BigInt(startIndex + i));
+
       // use multicall to get all the challenges
       const challenges = (
         await this.publicClient.multicall({
-          contracts: Array.from({ length: count }, (_, i) => ({
+          contracts: challengesIds.map((challengeId) => ({
             address: this.escrowAddress,
             abi: escrowAbi,
             functionName: "getChallenge",
-            args: [BigInt(startIndex + i)],
+            args: [challengeId],
           })),
           multicallAddress: this.multicallAddress,
         })
@@ -167,6 +179,36 @@ export class EscrowService {
       console.error("Error getting challenges paginated", error);
       return [];
     }
+  }
+
+  async getChallengeById(id: number): Promise<Challenge> {
+    const challenge = await this.publicClient.readContract({
+      address: this.escrowAddress,
+      abi: escrowAbi,
+      functionName: "getChallenge",
+      args: [BigInt(id)],
+    });
+    const endsAt = new Date(Number(challenge.endsAt) * 1000);
+
+    const metadata = (await this.ipfsClient.downloadJSON(
+      challenge.metadataUri
+    )) as any;
+
+    return {
+      id: Number(id),
+      status:
+        CHALLENGE_STATUS_MAP[
+          challenge.status as keyof typeof CHALLENGE_STATUS_MAP
+        ],
+      endsAt: endsAt,
+      createdAt: new Date(Number(challenge.createdAt) * 1000),
+      poolSize: challenge.poolSize,
+      metadata: {
+        title: metadata.title,
+        description: metadata.description,
+      },
+      admin: challenge.admin,
+    };
   }
 
   async getAllowance(address: Address): Promise<bigint> {
@@ -306,35 +348,6 @@ export class EscrowService {
     }));
   }
 
-  async getSubmissionById(
-    challengeId: bigint,
-    submissionId: bigint
-  ): Promise<Submission> {
-    const submission = await this.publicClient.readContract({
-      address: this.escrowAddress,
-      abi: escrowAbi,
-      functionName: "getSubmission",
-      args: [challengeId, submissionId],
-    });
-    const metadata = (await this.ipfsClient.downloadJSON(
-      submission.metadataUri
-    )) as any;
-
-    return {
-      id: Number(submissionId),
-      creator: submission.creator,
-      creatorContact: submission.creatorContact,
-      createdAt: new Date(Number(submission.createdAt) * 1000),
-      status:
-        SUBMISSION_STATUS_MAP[
-          submission.status as keyof typeof SUBMISSION_STATUS_MAP
-        ],
-      metadata: {
-        description: metadata.description,
-      },
-    };
-  }
-
   async getSubmissionsPaginated(
     challengeId: bigint,
     startIndex: number,
@@ -388,24 +401,33 @@ export class EscrowService {
     return data;
   }
 
-  async getWinnerSubmissions(challengeId: number): Promise<bigint[]> {
-    const winners = await this.publicClient.readContract({
+  async getSubmissionById(
+    challengeId: bigint,
+    submissionId: bigint
+  ): Promise<Submission> {
+    const submission = await this.publicClient.readContract({
       address: this.escrowAddress,
       abi: escrowAbi,
-      functionName: "getWinnerSubmissions",
-      args: [BigInt(challengeId)],
+      functionName: "getSubmission",
+      args: [challengeId, submissionId],
     });
-    return winners as bigint[];
-  }
+    const metadata = (await this.ipfsClient.downloadJSON(
+      submission.metadataUri
+    )) as any;
 
-  async getIneligibleSubmissions(challengeId: number): Promise<bigint[]> {
-    const ineligible = await this.publicClient.readContract({
-      address: this.escrowAddress,
-      abi: escrowAbi,
-      functionName: "getIneligibleSubmissions",
-      args: [BigInt(challengeId)],
-    });
-    return ineligible as bigint[];
+    return {
+      id: Number(submissionId),
+      creator: submission.creator,
+      creatorContact: submission.creatorContact,
+      createdAt: new Date(Number(submission.createdAt) * 1000),
+      status:
+        SUBMISSION_STATUS_MAP[
+          submission.status as keyof typeof SUBMISSION_STATUS_MAP
+        ],
+      metadata: {
+        description: metadata.description,
+      },
+    };
   }
 
   async getClaimable(challengeId: bigint, address: Address): Promise<bigint> {

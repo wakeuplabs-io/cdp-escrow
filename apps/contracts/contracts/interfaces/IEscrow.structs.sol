@@ -9,6 +9,22 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev These structs organize challenge and submission data in a standardized format
  */
 interface IEscrowStructs {
+    /**
+     * @notice Challenger profile data structure containing all information about a challenger
+     * @param name The name of the challenger
+     * @param description The description of the challenger
+     * @param website The website of the challenger
+     * @param logoURI The URI of the challenger's logo
+     * @param verified Whether the challenger is verified
+     */
+    struct ChallengerProfile {
+        string name;
+        string description;
+        string website;
+        string logoURI;
+        bool verified;
+    }
+
     enum ChallengeStatus {
         Active,
         PendingReview,

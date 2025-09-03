@@ -12,18 +12,19 @@ import {
 import { TOKEN_DECIMALS } from "@/config";
 import { useBalance, useWithdraw } from "@/hooks/balance";
 import { formatBalance, shortenAddress } from "@/lib/utils";
-import { useEvmAddress, useIsSignedIn, useSignOut } from "@coinbase/cdp-hooks";
+import { useEvmAddress, useSignOut } from "@coinbase/cdp-hooks";
 import { AuthButton } from "@coinbase/cdp-react/components/AuthButton";
 import {
   AlertCircleIcon,
   ArrowDownIcon,
   ArrowLeftIcon,
   ArrowUpIcon,
-  LogOutIcon,
   QrCodeIcon,
+  UserIcon,
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QrCode from "react-qr-code";
 import { Tooltip } from "react-tooltip";
@@ -47,6 +48,8 @@ const Account: React.FC<{
   setTab: (tab: Tab) => void;
 }> = ({ setTab, address, balance }) => {
   const { signOut } = useSignOut();
+  const router = useRouter();
+
   return (
     <>
       <Address
@@ -56,37 +59,40 @@ const Account: React.FC<{
         className="mb-6"
       />
 
-      <div className="flex flex-col gap-2">
-        <Button
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <button
+          onClick={() => router.push(`/${address}/challenges`)}
+          className="flex justify-start text-sm flex-col gap-2 items-center hover:bg-muted p-2 rounded-md"
+        >
+          <UserIcon className="w-4 h-4" />
+          <div className="text-center">Profile</div>
+        </button>
+
+        <button
           onClick={() => setTab(Tab.Deposit)}
-          className="w-full justify-start text-sm"
-          size="lg"
-          variant="outline"
+          className="flex text-sm flex-col gap-2 items-center justify-center hover:bg-muted p-2 rounded-md"
         >
           <ArrowDownIcon className="w-4 h-4" />
-          Add USDC
-        </Button>
+          <div>Deposit</div>
+        </button>
 
-        <Button
+        <button
           onClick={() => setTab(Tab.Withdraw)}
-          className="w-full justify-start text-sm"
-          size="lg"
-          variant="outline"
+          className="flex justify-start text-sm flex-col gap-2 items-center hover:bg-muted p-2 rounded-md"
         >
           <ArrowUpIcon className="w-4 h-4" />
-          Withdraw USDC
-        </Button>
-
-        <Button
-          onClick={signOut}
-          className="w-full text-destructive justify-start text-sm"
-          size="lg"
-          variant="outline"
-        >
-          <LogOutIcon className="w-4 h-4" />
-          Sign out
-        </Button>
+          <div>Withdraw</div>
+        </button>
       </div>
+
+      <Button
+        size="lg"
+        variant="outline"
+        onClick={signOut}
+        className="w-full text-destructive flex justify-center text-sm"
+      >
+        Sign out
+      </Button>
     </>
   );
 };
@@ -167,7 +173,7 @@ const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
   );
 };
 
-const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
+const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
   const { evmAddress } = useEvmAddress();
   const { data: balance } = useBalance(evmAddress);
   const { mutateAsync: withdraw, isPending: isWithdrawing } = useWithdraw();
@@ -187,6 +193,7 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
           "Withdrawal created successfully with user operation hash: " +
             userOperationHash
         );
+        setTab(Tab.Account);
       })
       .catch((error) => {
         console.error(error);
@@ -194,7 +201,7 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
           description: error instanceof Error ? error.message : "Unknown error",
         });
       });
-  }, [to, amount, withdraw, evmAddress]);
+  }, [to, amount, withdraw, evmAddress, setTab]);
 
   const validation = useMemo(() => {
     if (!to) {
@@ -330,7 +337,6 @@ export const AccountManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState(Tab.Account);
 
-  const { isSignedIn } = useIsSignedIn();
   const { evmAddress } = useEvmAddress();
   const { data: balance } = useBalance(evmAddress);
 
@@ -352,9 +358,13 @@ export const AccountManager = () => {
     const tabs = {
       [Tab.Account]: {
         title: "Your account",
-        description: "Your account address is ready to be used.",
+        description: "",
         content: (
-          <Account setTab={setTab} address={evmAddress} balance={balance ?? 0n} />
+          <Account
+            setTab={setTab}
+            address={evmAddress}
+            balance={balance ?? 0n}
+          />
         ),
       },
       [Tab.Deposit]: {
@@ -389,10 +399,10 @@ export const AccountManager = () => {
 
   return (
     <>
-      {isSignedIn && evmAddress ? (
+      {evmAddress ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0"
+          className="flex items-center gap-4 rounded-full border h-[46px] px-4 shrink-0"
         >
           <Image
             src="/avatar.webp"
@@ -402,7 +412,7 @@ export const AccountManager = () => {
             height={18}
           />
           <span className="text-sm">{shortenAddress(evmAddress ?? "")}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {formatBalance(balance ?? 0n)} USDC
           </span>
         </button>
@@ -437,9 +447,11 @@ export const AccountManager = () => {
             {currentTab.title}
           </DialogTitle>
 
-          <DialogDescription className="text-sm text-muted-foreground text-center mb-6">
-            {currentTab.description}
-          </DialogDescription>
+          {currentTab.description !== "" && (
+            <DialogDescription className="text-sm text-muted-foreground text-center mb-6">
+              {currentTab.description}
+            </DialogDescription>
+          )}
 
           {currentTab.content}
         </DialogContent>

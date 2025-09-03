@@ -157,18 +157,3 @@ export const useClaim = () => {
     },
   });
 };
-
-
-export const useWinnerSubmissions = (challengeId: number) => {
-  return useQuery({
-    queryKey: QueryKeyFactory.winnerSubmissions(challengeId),
-    queryFn: () => escrowService.getWinnerSubmissions(challengeId),
-  });
-};
-
-export const useIneligibleSubmissions = (challengeId: number) => {
-  return useQuery({
-    queryKey: QueryKeyFactory.ineligibleSubmissions(challengeId),
-    queryFn: () => escrowService.getIneligibleSubmissions(challengeId),
-  });
-};

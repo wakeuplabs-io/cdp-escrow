@@ -1,6 +1,7 @@
 "use client";
 
 import { AccountManager } from "@/components/account-manager";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -19,13 +20,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Markdown from "react-markdown";
-import { Tooltip } from "react-tooltip";
 import { toast } from "sonner";
-import { parseUnits } from "viem";
+import { Address, parseUnits } from "viem";
 
-export default function CreateChallengePage() {
+export default function CreateChallengePage({
+  params,
+}: {
+  params: Promise<{ challenger: Address }>;
+}) {
+  const { challenger } = React.use(params);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [preview, setPreview] = useState(false);
@@ -47,14 +53,22 @@ export default function CreateChallengePage() {
         poolSize: parseUnits(poolSize, TOKEN_DECIMALS),
         endDate: endsAt,
       });
-      router.push(`/challenges/${challengeId}`);
+      router.push(`/${challenger}/challenges/${challengeId}`);
     } catch (error) {
       console.error(error);
       toast.error("Failed to create challenge", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }, [title, description, endsAt, createChallenge, router, poolSize]);
+  }, [
+    title,
+    description,
+    endsAt,
+    createChallenge,
+    router,
+    poolSize,
+    challenger,
+  ]);
 
   const validation = useMemo(() => {
     if (Number(poolSize) < 1) {
@@ -84,35 +98,36 @@ export default function CreateChallengePage() {
 
   return (
     <div>
-      <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <Link
-          href="/"
-          className="flex items-center justify-center h-[46px] w-[46px]  border rounded-full"
-        >
-          <MoveLeftIcon className="w-4 h-4" />
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <AccountManager />
-
-          <button
-            disabled={!validation.isValid || isCreatingChallenge}
-            onClick={onCreateChallenge}
-            className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            data-tooltip-id="error-tooltip"
+      <div className="border-b">
+        <div className="flex max-w-5xl mx-auto items-center justify-between h-[72px]">
+          <Link
+            href="/"
+            className="flex items-center justify-center h-[46px] w-[46px]  border rounded-full"
           >
-            <span>{isCreatingChallenge ? "Creating..." : "Publish"}</span>
-            <SendHorizontalIcon className="w-4 h-4" />
-          </button>
+            <MoveLeftIcon className="w-4 h-4" />
+          </Link>
 
-          {!validation.isValid && (
-            <Tooltip id="error-tooltip" content={errorMessage} />
-          )}
+          <AccountManager />
         </div>
       </div>
 
-      <div className="flex min-h-screen max-w-4xl mx-auto">
-        <div className="p-6 pb-20 w-full">
+      <div className="min-h-screen max-w-5xl mx-auto">
+        {/* How it works */}
+        <div className="pt-10 mb-6">
+          <div className="font-bold mb-2 text-xl">Create Challenge</div>
+          <div className="text-sm text-muted-foreground">
+            Set a clear scope, rules, evaluation criteria, and required links in
+            your brief. If no submissions are received by the deadline, you’ll
+            be able to reclaim your funds from the challenge page. If
+            submissions are received, you’ll classify them as winners,
+            acceptable, or ineligible: winners will share 80% of the pool,
+            acceptable submissions will share 20%, and ineligible ones will
+            receive nothing.
+          </div>
+        </div>
+
+        {/* Create challenge form */}
+        <div className="mb-10 w-full">
           {/* Title input */}
           <div className="bg-muted p-4 rounded-lg relative mb-4">
             <span className="text-xs text-muted-foreground absolute left-4 top-2">
@@ -133,7 +148,7 @@ export default function CreateChallengePage() {
               Pool Size (USDC)
             </span>
             <input
-              type="text"
+              type="number"
               value={poolSize}
               placeholder="Pool size"
               className="w-full h-full outline-none mt-4"
@@ -167,6 +182,7 @@ export default function CreateChallengePage() {
                     mode="single"
                     selected={endsAt}
                     captionLayout="dropdown"
+                    hidden={{ before: new Date() }} 
                     onSelect={(date) => {
                       if (date) {
                         setEndsAt(date);
@@ -202,19 +218,17 @@ export default function CreateChallengePage() {
           <div className="mb-6">
             <div className="flex gap-2 mb-3 font-bold">
               <button
-                className={cn(
-                  "uppercase text-sm",
-                  preview ? "text-muted-foreground" : ""
-                )}
+                className={cn("uppercase text-sm", {
+                  "text-muted-foreground": preview,
+                })}
                 onClick={() => setPreview(false)}
               >
                 Write
               </button>
               <button
-                className={cn(
-                  "uppercase text-sm",
-                  !preview ? "text-muted-foreground" : ""
-                )}
+                className={cn("uppercase text-sm", {
+                  "text-muted-foreground": !preview,
+                })}
                 onClick={() => setPreview(true)}
               >
                 Preview
@@ -237,17 +251,27 @@ export default function CreateChallengePage() {
               />
             )}
           </div>
+        </div>
 
-          {/* How it works */}
-          <div className="">
-            <div className="font-medium mb-2">How it works</div>
-            <div className="text-sm text-muted-foreground">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam
-              assumenda eum aperiam facere. Incidunt natus sunt voluptatem sit
-              at sapiente fugiat voluptatum recusandae repellendus voluptatibus
-              non quibusdam sed, facere dolorum.
-            </div>
-          </div>
+        {/* submit and cancel buttons */}
+        <div className="flex justify-end gap-2 mb-20">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => router.push(`/${challenger}/challenges`)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            tooltip={errorMessage}
+            disabled={!validation.isValid || isCreatingChallenge}
+            onClick={onCreateChallenge}
+            className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>{isCreatingChallenge ? "Creating..." : "Publish"}</span>
+            <SendHorizontalIcon className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>

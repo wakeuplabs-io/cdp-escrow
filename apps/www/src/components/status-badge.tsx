@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import { ChallengeStatus } from "@cdp/common/src/types/challenge";
 import { SubmissionStatus } from "@cdp/common/src/types/submission";
-import { CheckIcon, ClockIcon, RadioIcon, StarIcon, XIcon } from "lucide-react";
+import { ClockIcon, MinusCircleIcon } from "@heroicons/react/24/solid";
+import { CheckIcon, RadioIcon, StarIcon, XIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Tooltip } from "react-tooltip";
 
@@ -18,26 +19,16 @@ export const ChallengeStatusIcon: React.FC<{
   }
   if (status === "pending") {
     return (
-      <div
-        className={cn(
-          "w-[14px] h-[14px] rounded-full bg-yellow-500 flex items-center justify-center",
-          className
-        )}
-      >
-        <div className="w-2 h-2 bg-white rounded-full"></div>
-      </div>
+      <ClockIcon
+        className={cn("w-[18px] h-[18px] text-yellow-500", className)}
+      />
     );
   }
   if (status === "completed") {
     return (
-      <div
-        className={cn(
-          "w-[14px] h-[14px] rounded-full bg-gray-900 flex items-center justify-center",
-          className
-        )}
-      >
-        <CheckIcon className="w-2 h-2 text-white" />
-      </div>
+      <MinusCircleIcon
+        className={cn("w-[18px] h-[18px] text-gray-900", className)}
+      />
     );
   }
 
@@ -77,7 +68,6 @@ export const SubmissionStatusBadge: React.FC<{
   status: SubmissionStatus;
   className?: string;
 }> = ({ status }) => {
-
   const icon = {
     awarded: <StarIcon className="w-2 h-2 fill-white" />,
     ineligible: <XIcon className="w-2 h-2" />,
@@ -111,10 +101,7 @@ export const SubmissionStatusBadge: React.FC<{
         {icon[status]}
       </span>
 
-      <Tooltip
-        id="submission-status-tooltip"
-        content={tooltip[status]}
-      />
+      <Tooltip id="submission-status-tooltip" content={tooltip[status]} />
     </>
   );
 };

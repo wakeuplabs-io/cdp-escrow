@@ -1,8 +1,9 @@
 import { Address } from "viem";
 
 export const QueryKeyFactory = {
-  challenge: (challengeId: number) => ["challenges", challengeId],
-  challenges: () => ["challenges"],
+  challenger: (challenger: Address) => ["challenger", challenger],
+  challenge: (challengeId: number) => ["challenge", challengeId],
+  challenges: (challenger?: string) => ["challenges", challenger],
   submissionCount: (challengeId: number) => [
     "submissions",
     "count",

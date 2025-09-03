@@ -1,6 +1,7 @@
-import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react"
+import { Tooltip } from "react-tooltip"
 
 import { cn } from "@/lib/utils"
 
@@ -40,19 +41,39 @@ function Button({
   variant,
   size,
   asChild = false,
+  tooltip,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    tooltip?: string
   }) {
   const Comp = asChild ? Slot : "button"
+  const id = React.useId()
+  const tooltipId = tooltip ? `button-tooltip-${id}` : undefined
 
-  return (
+  const buttonElement = (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
+  )
+
+  if (!tooltip) {
+    return buttonElement
+  }
+
+  return (
+    <>
+      <span
+        data-tooltip-id={tooltipId}
+        className="inline-flex"
+      >
+        {buttonElement}
+      </span>
+      <Tooltip id={tooltipId} content={tooltip} />
+    </>
   )
 }
 

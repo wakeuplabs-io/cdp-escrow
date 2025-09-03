@@ -2,6 +2,7 @@
 
 import { AccountManager } from "@/components/account-manager";
 import { ClaimButton } from "@/components/claim-button";
+import { Logo } from "@/components/logo";
 import { ResolveButton } from "@/components/resolve-button";
 import { ChallengeStatusBadge } from "@/components/status-badge";
 import { SubmissionCard } from "@/components/submission-card";
@@ -12,13 +13,7 @@ import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { formatDistanceToNow } from "date-fns";
-import {
-  AudioWaveformIcon,
-  ClockIcon,
-  DollarSignIcon,
-  MousePointerClickIcon,
-} from "lucide-react";
-import Link from "next/link";
+import { ClockIcon, DollarSignIcon, MousePointerClickIcon } from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -132,10 +127,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
-        <Link href="/challenges" className="flex items-center gap-4 w-full">
-          <AudioWaveformIcon className="w-4 h-4" />
-          <h1 className="text-xl font-bold">Acme Challenges</h1>
-        </Link>
+        <Logo width={150} height={46} />
 
         <AccountManager />
       </div>
@@ -170,7 +162,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </button>
           </div>
 
-          <div className="p-6 pt-12 pb-20 w-full">
+          <div className="px-10 pt-12 pb-20 w-full">
             <div>
               {activeTab === ActiveTab.Overview ? (
                 <div className="max-w-2xl">
@@ -265,12 +257,25 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             <div className="flex">
               <div className="mt-1 ml-2">
                 <div className="flex relative h-[60px] last:h-0">
-                  <div className="absolute size-[15px] inline-block rounded-full left-[-7px] border-4 border-white bg-gray-900"></div>
-                  <div className="border-l pr-4 mt-3 border-gray-900"></div>
+                  <div className="absolute size-[15px] inline-block rounded-full left-[-7px] border-4 border-white bg-zinc-900"></div>
+                  <div
+                    className={cn("border-l pr-4 mt-3", {
+                      "border-zinc-300": challenge.status === "active",
+                      "border-zinc-900": challenge.status !== "active",
+                    })}
+                  ></div>
                 </div>
 
                 <div className="flex relative h-[60px] last:h-0">
-                  <div className="absolute size-[15px] inline-block rounded-full left-[-7px] border-4 border-white bg-gray-900"></div>
+                  <div
+                    className={cn(
+                      "absolute size-[15px] inline-block rounded-full left-[-7px] border-4 border-white",
+                      {
+                        "bg-zinc-300": challenge.status === "active",
+                        "bg-zinc-900": challenge.status !== "active",
+                      }
+                    )}
+                  ></div>
                 </div>
               </div>
               <div className="flex-auto leading-6">

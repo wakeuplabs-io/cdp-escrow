@@ -57,6 +57,11 @@ export const escrowAbi = [
   },
   {
     inputs: [],
+    name: "ChallengerNotRegistered",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "InsufficientBalance",
     type: "error",
   },
@@ -237,25 +242,6 @@ export const escrowAbi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "admin",
-        type: "address",
-      },
-    ],
-    name: "getAdminChallenges",
-    outputs: [
-      {
-        internalType: "uint256[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "uint256",
         name: "challengeId",
         type: "uint256",
@@ -305,6 +291,25 @@ export const escrowAbi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "challenger",
+        type: "address",
+      },
+    ],
+    name: "getChallengerChallenges",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "getChallengesCount",
     outputs: [
@@ -344,17 +349,44 @@ export const escrowAbi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "challengeId",
-        type: "uint256",
+        internalType: "address",
+        name: "user",
+        type: "address",
       },
     ],
-    name: "getIneligibleSubmissions",
+    name: "getProfile",
     outputs: [
       {
-        internalType: "uint256[]",
+        components: [
+          {
+            internalType: "string",
+            name: "name",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "description",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "website",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "logoURI",
+            type: "string",
+          },
+          {
+            internalType: "bool",
+            name: "verified",
+            type: "bool",
+          },
+        ],
+        internalType: "struct IEscrowStructs.ChallengerProfile",
         name: "",
-        type: "uint256[]",
+        type: "tuple",
       },
     ],
     stateMutability: "view",
@@ -468,25 +500,6 @@ export const escrowAbi = [
         name: "challengeId",
         type: "uint256",
       },
-    ],
-    name: "getWinnerSubmissions",
-    outputs: [
-      {
-        internalType: "uint256[]",
-        name: "",
-        type: "uint256[]",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "challengeId",
-        type: "uint256",
-      },
       {
         internalType: "uint256[]",
         name: "awardedSubmissions",
@@ -499,6 +512,34 @@ export const escrowAbi = [
       },
     ],
     name: "resolveChallenge",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "name",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "description",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "website",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "logoURI",
+        type: "string",
+      },
+    ],
+    name: "setProfile",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

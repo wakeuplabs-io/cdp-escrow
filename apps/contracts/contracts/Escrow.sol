@@ -14,29 +14,28 @@ contract Escrow is IEscrow {
     uint256 internal challengesCount;
     // challengeId -> challenge
     mapping(uint256 => Challenge) internal challenges;
-    // user address -> challenges ids for which the user is the admin
-    mapping(address => uint256[]) internal adminChallenges;
+    // challenger address -> challenges ids for which the user is the admin
+    mapping(address => uint256[]) internal challengerChallenges;
 
     // challengeId -> submission count.
     mapping(uint256 => uint256) internal submissionsCount;
     // challengeId -> submissionId -> submission
     mapping(uint256 => mapping(uint256 => Submission)) internal submissions;
-    // challengeId -> winner submissions 
-    mapping(uint256 => uint256[]) internal awardedSubmissionsPerChallenge;
-    // challengeId -> ineligible submissions
-    mapping(uint256 => uint256[]) internal ineligibleSubmissionsPerChallenge;
     // challengeId -> submissionId -> true
-    mapping(uint256 => mapping(uint256 => bool)) internal isAwarded;
+    mapping(uint256 => mapping(uint256 => bool)) internal isSubmissionAwarded;
     // challengeId -> submissionId -> true
-    mapping(uint256 => mapping(uint256 => bool)) internal isIneligible;
-
+    mapping(uint256 => mapping(uint256 => bool))
+        internal isSubmissionIneligible;
     // challengeId -> user address -> bool
     mapping(uint256 => mapping(address => bool)) internal hasSubmitted;
+    // challengeId -> user address -> claimable balance
+    mapping(uint256 => mapping(address => uint256)) internal claimable;
+
     // user address -> challengeId[]
     mapping(address => UserSubmission[]) internal userSubmissions;
 
-    // challengeId -> user address -> claimable balance
-    mapping(uint256 => mapping(address => uint256)) internal claimable;
+    // user address -> challenger profile
+    mapping(address => ChallengerProfile) internal challengerProfiles;
 
     constructor(address _token) {
         token = IERC20(_token);
@@ -47,6 +46,29 @@ contract Escrow is IEscrow {
             revert OnlyAdmin();
         }
         _;
+    }
+
+    /// @inheritdoc IEscrow
+    function setProfile(
+        string calldata name,
+        string calldata description,
+        string calldata website,
+        string calldata logoURI
+    ) public {
+        challengerProfiles[msg.sender] = ChallengerProfile({
+            name: name,
+            description: description,
+            website: website,
+            logoURI: logoURI,
+            verified: false
+        });
+    }
+
+    /// @inheritdoc IEscrow
+    function getProfile(
+        address user
+    ) public view returns (ChallengerProfile memory) {
+        return challengerProfiles[user];
     }
 
     /// @inheritdoc IEscrow
@@ -64,7 +86,7 @@ contract Escrow is IEscrow {
             status: ChallengeStatus.Active,
             admin: msg.sender
         });
-        adminChallenges[msg.sender].push(challengeId);
+        challengerChallenges[msg.sender].push(challengeId);
         challengesCount++;
 
         // pull tokens
@@ -74,14 +96,95 @@ contract Escrow is IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function getChallenge(
-        uint256 challengeId
-    ) public view returns (Challenge memory) {
-        Challenge memory challenge = challenges[challengeId];
-        if (challenge.endsAt < block.timestamp && challenge.status == ChallengeStatus.Active) {
-            challenge.status = ChallengeStatus.PendingReview;
+    function resolveChallenge(
+        uint256 challengeId,
+        uint256[] calldata awardedSubmissions,
+        uint256[] calldata ineligibleSubmissions
+    ) public onlyAdmin(challengeId) {
+        if (challenges[challengeId].endsAt > block.timestamp) {
+            revert ChallengeNotClosed();
+        } else if (
+            challenges[challengeId].status == ChallengeStatus.Completed
+        ) {
+            revert ChallengeAlreadyResolved();
+        } else if (
+            awardedSubmissions.length + ineligibleSubmissions.length >
+            submissionsCount[challengeId]
+        ) {
+            revert InvalidSubmissionCount();
         }
-        return challenge;
+
+        challenges[challengeId].status = ChallengeStatus.Completed;
+
+        // iterate over all submissions, mark them as ineligible, awarded or accepted and assign rewards
+        uint256 awardedPrize;
+        uint256 acceptedPrize;
+        uint256 totalSubs = submissionsCount[challengeId];
+
+        if (totalSubs == 0 || totalSubs == ineligibleSubmissions.length) {
+            // no submissions, return it all to admin
+            token.transfer(
+                challenges[challengeId].admin,
+                challenges[challengeId].poolSize
+            );
+            return;
+        } else if (
+            totalSubs - ineligibleSubmissions.length ==
+            awardedSubmissions.length
+        ) {
+            // all submissions are awarded equally
+            awardedPrize =
+                challenges[challengeId].poolSize /
+                awardedSubmissions.length;
+            acceptedPrize = 0;
+        } else {
+            // some submissions are accepted, some are awarded, some are ineligible
+            awardedPrize =
+                (challenges[challengeId].poolSize * 70) /
+                100 /
+                awardedSubmissions.length;
+            acceptedPrize =
+                (challenges[challengeId].poolSize * 30) /
+                100 /
+                (totalSubs -
+                    ineligibleSubmissions.length -
+                    awardedSubmissions.length);
+        }
+
+        // store awarded and ineligible submissions
+        for (uint256 i = 0; i < awardedSubmissions.length; i++) {
+            isSubmissionAwarded[challengeId][awardedSubmissions[i]] = true;
+        }
+        for (uint256 i = 0; i < ineligibleSubmissions.length; i++) {
+            isSubmissionIneligible[challengeId][
+                ineligibleSubmissions[i]
+            ] = true;
+        }
+
+        // update submissions and claimable balances
+        for (uint256 i = 0; i < totalSubs; i++) {
+            if (isSubmissionAwarded[challengeId][i]) {
+                submissions[challengeId][i].status = SubmissionStatus.Awarded;
+                claimable[challengeId][
+                    submissions[challengeId][i].creator
+                ] += awardedPrize;
+            } else if (isSubmissionIneligible[challengeId][i]) {
+                submissions[challengeId][i].status = SubmissionStatus
+                    .Ineligible;
+                claimable[challengeId][submissions[challengeId][i].creator] = 0;
+            } else {
+                submissions[challengeId][i].status = SubmissionStatus.Accepted;
+                claimable[challengeId][
+                    submissions[challengeId][i].creator
+                ] += acceptedPrize;
+            }
+        }
+
+        emit ChallengeResolved(
+            challengeId,
+            awardedSubmissions,
+            ineligibleSubmissions
+        );
     }
 
     /// @inheritdoc IEscrow
@@ -90,10 +193,24 @@ contract Escrow is IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function getAdminChallenges(
-        address admin
+    function getChallengerChallenges(
+        address challenger
     ) public view returns (uint256[] memory) {
-        return adminChallenges[admin];
+        return challengerChallenges[challenger];
+    }
+
+    /// @inheritdoc IEscrow
+    function getChallenge(
+        uint256 challengeId
+    ) public view returns (Challenge memory) {
+        Challenge memory challenge = challenges[challengeId];
+        if (
+            challenge.endsAt < block.timestamp &&
+            challenge.status == ChallengeStatus.Active
+        ) {
+            challenge.status = ChallengeStatus.PendingReview;
+        }
+        return challenge;
     }
 
     /// @inheritdoc IEscrow
@@ -121,20 +238,14 @@ contract Escrow is IEscrow {
         });
         submissionsCount[challengeId]++;
         hasSubmitted[challengeId][msg.sender] = true;
-        userSubmissions[msg.sender].push(UserSubmission({
-            challengeId: challengeId,
-            submissionId: submissionId
-        }));
+        userSubmissions[msg.sender].push(
+            UserSubmission({
+                challengeId: challengeId,
+                submissionId: submissionId
+            })
+        );
 
         emit SubmissionCreated(submissionId, challengeId, msg.sender);
-    }
-
-    /// @inheritdoc IEscrow
-    function getSubmission(
-        uint256 challengeId,
-        uint256 submissionId
-    ) public view returns (Submission memory) {
-        return submissions[challengeId][submissionId];
     }
 
     /// @inheritdoc IEscrow
@@ -152,77 +263,11 @@ contract Escrow is IEscrow {
     }
 
     /// @inheritdoc IEscrow
-    function getWinnerSubmissions(uint256 challengeId) public view returns (uint256[] memory) {
-        return awardedSubmissionsPerChallenge[challengeId];
-    }
-    
-    /// @inheritdoc IEscrow
-    function getIneligibleSubmissions(uint256 challengeId) public view returns (uint256[] memory) {
-        return ineligibleSubmissionsPerChallenge[challengeId];
-    }
-
-    /// @inheritdoc IEscrow
-    function resolveChallenge(
+    function getSubmission(
         uint256 challengeId,
-        uint256[] calldata awardedSubmissions,
-        uint256[] calldata ineligibleSubmissions
-    ) public onlyAdmin(challengeId) {
-        if (challenges[challengeId].endsAt > block.timestamp) {
-            revert ChallengeNotClosed();
-        } else if (challenges[challengeId].status == ChallengeStatus.Completed) {
-            revert ChallengeAlreadyResolved();
-        } else if (awardedSubmissions.length + ineligibleSubmissions.length > submissionsCount[challengeId]) {
-            revert InvalidSubmissionCount();
-        }
-
-        challenges[challengeId].status = ChallengeStatus.Completed;
-
-        // iterate over all submissions, mark them as ineligible, awarded or accepted and assign rewards
-        uint256 awardedPrize; 
-        uint256 acceptedPrize;
-        uint256 totalSubs = submissionsCount[challengeId];
-
-        if (totalSubs == 0 || totalSubs == ineligibleSubmissions.length) {
-            // no submissions, return it all to admin
-            token.transfer(challenges[challengeId].admin, challenges[challengeId].poolSize);
-            return;
-        } else if (totalSubs - ineligibleSubmissions.length == awardedSubmissions.length) {
-            // all submissions are awarded equally
-            awardedPrize = challenges[challengeId].poolSize / awardedSubmissions.length;
-            acceptedPrize = 0;
-        } else {
-            // some submissions are accepted, some are awarded, some are ineligible
-            awardedPrize = challenges[challengeId].poolSize * 70 / 100 / awardedSubmissions.length;
-            acceptedPrize = challenges[challengeId].poolSize * 30 / 100 / (totalSubs - ineligibleSubmissions.length - awardedSubmissions.length);
-        }
-
-        // store awarded and ineligible submissions
-        for (uint256 i = 0; i < awardedSubmissions.length; i++) {
-            isAwarded[challengeId][awardedSubmissions[i]] = true;
-            awardedSubmissionsPerChallenge[challengeId].push(awardedSubmissions[i]);
-        }
-        for (uint256 i = 0; i < ineligibleSubmissions.length; i++) {
-            isIneligible[challengeId][ineligibleSubmissions[i]] = true;
-            ineligibleSubmissionsPerChallenge[challengeId].push(ineligibleSubmissions[i]);
-        }
-
-        // update submissions and claimable balances
-        for (uint256 i = 0; i < totalSubs; i++) {
-            if (isAwarded[challengeId][i]) {
-                submissions[challengeId][i].status = SubmissionStatus.Awarded;
-                claimable[challengeId][submissions[challengeId][i].creator] += awardedPrize;
-            }
-            else if (isIneligible[challengeId][i]) {
-                submissions[challengeId][i].status = SubmissionStatus.Ineligible;
-                claimable[challengeId][submissions[challengeId][i].creator] = 0;
-            }
-            else {
-                submissions[challengeId][i].status = SubmissionStatus.Accepted;
-                claimable[challengeId][submissions[challengeId][i].creator] += acceptedPrize;
-            }
-        }
-
-        emit ChallengeResolved(challengeId, awardedSubmissions, ineligibleSubmissions);
+        uint256 submissionId
+    ) public view returns (Submission memory) {
+        return submissions[challengeId][submissionId];
     }
 
     /// @inheritdoc IEscrow
