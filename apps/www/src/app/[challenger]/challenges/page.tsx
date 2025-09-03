@@ -9,10 +9,9 @@ import { useChallengerProfile, useChallenges } from "@/hooks/challenges";
 import { useCopyToClipboard } from "@/hooks/copy";
 import { useInfiniteScroll } from "@/hooks/infinite-scroll";
 import { shortenAddress } from "@/lib/utils";
-import { useEvmAddress, useIsSignedIn } from "@coinbase/cdp-hooks";
+import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { CheckIcon, CopyIcon, GlobeIcon, SettingsIcon } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { Address } from "viem";
 
@@ -21,10 +20,8 @@ export default function ChallengesPage({
 }: {
   params: Promise<{ challenger: Address | "all" }>;
 }) {
-  const router = useRouter();
   const { challenger } = React.use(params);
 
-  const { isSignedIn } = useIsSignedIn();
   const { evmAddress } = useEvmAddress();
   const { data, fetchNextPage, hasNextPage, isPending } =
     useChallenges(challenger);

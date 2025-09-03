@@ -218,9 +218,9 @@ export default function Page({
                     >
                       <Image
                         src={
-                          !profile || profile?.logoURI === ""
+                          !profile || profile.logoURI === ""
                             ? "/avatar.webp"
-                            : profile?.logoURI!
+                            : profile.logoURI
                         }
                         alt="avatar"
                         className="rounded-full border-2 border-gray-200"
@@ -421,8 +421,6 @@ export default function Page({
                       : challenge.status === "pending" &&
                         sortedSubmissions.length === 0
                       ? "No submissions. Claim funds back"
-                      : challenge.status === "completed"
-                      ? "Challenge already resolved"
                       : !isPickingWinners
                       ? "Pick winners and ineligible submissions"
                       : "Resolve Challenge"}
