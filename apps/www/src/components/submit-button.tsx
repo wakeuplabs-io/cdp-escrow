@@ -48,7 +48,7 @@ export const SubmitButton: React.FC<{
       onClick={() => {
         router.push(`/${challenge.admin}/challenges/${challenge.id}/submit`);
       }}
-      className="w-full rounded-full"
+      className="rounded-full"
     >
       {hasSubmission ? "Already submitted" : "Submit your solution"}
     </Button>

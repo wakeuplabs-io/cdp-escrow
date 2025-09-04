@@ -76,7 +76,7 @@ export class EscrowService {
       data: encodeFunctionData({
         abi: escrowAbi,
         functionName: "setProfile",
-        args: [params.name, params.description, params.website, params.logoURI],
+        args: [params.name, params.description, params.website],
       }),
     };
   }
@@ -411,9 +411,11 @@ export class EscrowService {
       functionName: "getSubmission",
       args: [challengeId, submissionId],
     });
+    console.log("submission", submission);
     const metadata = (await this.ipfsClient.downloadJSON(
       submission.metadataUri
     )) as any;
+    console.log("metadata", metadata);
 
     return {
       id: Number(submissionId),

@@ -19,13 +19,7 @@ import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { formatDistanceToNow } from "date-fns";
-import {
-  CheckIcon,
-  ClockIcon,
-  DollarSignIcon,
-  LinkIcon,
-  MousePointerClickIcon,
-} from "lucide-react";
+import { CheckIcon, ClockIcon, DollarSignIcon, LinkIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useMemo, useState } from "react";
@@ -125,6 +119,7 @@ export default function Page({
       winners: selectedWinners,
       ineligible: selectedIneligible,
     }).then(({ userOperationHash }) => {
+      setIsPickingWinners(false);
       toast.success(
         "Challenge resolved successfully with user operation hash: " +
           userOperationHash
@@ -165,144 +160,186 @@ export default function Page({
   }
   return (
     <div>
-      <div className="flex border-b items-center justify-between h-[72px] px-14">
-        <Logo width={150} height={46} />
+      <div className="border-b">
+        <div className="flex items-center justify-between h-[72px] max-w-7xl mx-auto">
+          <Logo width={150} height={46} />
 
-        <AccountManager />
+          <AccountManager />
+        </div>
       </div>
 
-      <div className="flex divide-x">
+      {/* Tabs navigation */}
+      <div className="border-b w-full h-9">
+        <div className="flex flex-1 items-center gap-2 max-w-7xl mx-auto -mb-1">
+          <button
+            className={cn(
+              "px-3 h-9 uppercase text-muted-foreground text-xs font-bold",
+              activeTab === ActiveTab.Overview &&
+                "border-b border-b-foreground text-foreground"
+            )}
+            onClick={() => setActiveTab(ActiveTab.Overview)}
+          >
+            Overview
+          </button>
+          <button
+            className={cn(
+              "px-3 h-9 uppercase text-muted-foreground text-xs font-bold",
+              activeTab === ActiveTab.Submissions &&
+                "border-b border-b-foreground text-foreground"
+            )}
+            onClick={() => setActiveTab(ActiveTab.Submissions)}
+          >
+            Submissions
+          </button>
+        </div>
+      </div>
+
+      <div className="flex divide-x max-w-7xl mx-auto">
         {/* Main content */}
         <div className="min-h-screen flex-1">
-          {/* Tabs navigation */}
-          <div className="border-b w-full px-10 flex ">
-            <button
-              className={cn(
-                "px-3 py-2 uppercase text-muted-foreground text-xs font-bold",
-                activeTab === ActiveTab.Overview &&
-                  "border-b border-b-foreground text-foreground"
-              )}
-              onClick={() => setActiveTab(ActiveTab.Overview)}
-            >
-              Overview
-            </button>
-            <button
-              className={cn(
-                "px-3 py-2 uppercase text-muted-foreground text-xs font-bold flex items-center gap-2",
-                activeTab === ActiveTab.Submissions &&
-                  "border-b border-b-foreground text-foreground"
-              )}
-              onClick={() => setActiveTab(ActiveTab.Submissions)}
-            >
-              <span>Submissions</span>
-              <span className="bg-muted rounded-full px-2 py-1 text-xs">
-                {submissionCount}
-              </span>
-            </button>
-          </div>
+          <div className="pr-10 pt-12 pb-20 w-full">
+            {activeTab === ActiveTab.Overview ? (
+              <div className="">
+                <h1 className="text-4xl break-words font-bold mb-4">
+                  {challenge.metadata.title}
+                </h1>
 
-          <div className="px-24 pt-12 pb-20 w-full">
-            <div>
-              {activeTab === ActiveTab.Overview ? (
-                <div className="">
-                  <h1 className="text-4xl break-words font-bold mb-4">
-                    {challenge.metadata.title}
-                  </h1>
+                <ChallengeStatusBadge status={challenge.status} />
 
-                  <ChallengeStatusBadge status={challenge.status} />
-
-                  <div className="flex items-center justify-between py-8">
-                    <Link
-                      href={`/${challenge.admin}/challenges`}
-                      className="flex items-center gap-2"
-                    >
-                      <Image
-                        src={"/avatar.webp"}
-                        alt="avatar"
-                        className="rounded-full border-2 border-gray-200"
-                        width={32}
-                        height={32}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          {!profile || profile?.name == ""
-                            ? shortenAddress(challenge.admin)
-                            : profile?.name}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {formatDistanceToNow(challenge.createdAt)} ago
-                          </span>
-                        </div>
+                <div className="flex items-center justify-between py-8">
+                  <Link
+                    href={`/${challenge.admin}/challenges`}
+                    className="flex items-center gap-2"
+                  >
+                    <Image
+                      src={"/avatar.webp"}
+                      alt="avatar"
+                      className="rounded-full border-2 border-gray-200"
+                      width={32}
+                      height={32}
+                    />
+                    <div>
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        {!profile || profile?.name == ""
+                          ? shortenAddress(challenge.admin)
+                          : profile?.name}
                       </div>
-                    </Link>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>
+                          {formatDistanceToNow(challenge.createdAt)} ago
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+
+                  <div className="flex items-center gap-2">
+                    {challenge.status === "completed" ? (
+                      <ClaimButton challenge={challenge} />
+                    ) : (
+                      <>
+                        <SubmitButton challenge={challenge} />
+
+                        {canResolve && (
+                          <Button
+                            variant="outline"
+                            className="rounded-full"
+                            disabled={
+                              isResolvingChallenge ||
+                              challenge.status !== "pending"
+                            }
+                            onClick={() => {
+                              if (isPickingWinners) {
+                                onResolve();
+                              } else {
+                                setActiveTab(ActiveTab.Submissions);
+                                setIsPickingWinners(true);
+                              }
+                            }}
+                          >
+                            {isResolvingChallenge
+                              ? "Resolving..."
+                              : challenge.status === "pending" &&
+                                sortedSubmissions.length === 0
+                              ? "No submissions. Claim funds back"
+                              : !isPickingWinners
+                              ? "Pick winners and ineligible submissions"
+                              : "Resolve Challenge"}
+                          </Button>
+                        )}
+                      </>
+                    )}
 
                     <Button
                       tooltip="Copy link"
                       variant="outline"
-                      className="rounded-full h-8 w-8"
+                      className="rounded-full h-9 w-9"
                       onClick={() => copyToClipboard(window.location.href)}
                     >
                       {copied ? <CheckIcon /> : <LinkIcon />}
                     </Button>
                   </div>
-
-                  <div className="prose prose-sm max-w-none">
-                    <Markdown>{challenge.metadata.description}</Markdown>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-                    <span>{submissionCount} submissions</span>
-                    <span>·</span>
-                    <span>{timeString}</span>
-                  </div>
                 </div>
-              ) : (
-                <div className="pb-8 -pt-6">
-                  <div className="divide-y">
-                    {sortedSubmissions.map((submission) => (
-                      <SubmissionCard
-                        key={submission.id}
-                        submission={submission}
-                        isResolving={isPickingWinners}
-                        isWinner={selectedWinners.includes(
-                          BigInt(submission.id)
-                        )}
-                        isIneligible={selectedIneligible.includes(
-                          BigInt(submission.id)
-                        )}
-                        onMarkAsWinner={() => onMarkAsWinner(submission)}
-                        onMarkAsIneligible={() =>
-                          onMarkAsIneligible(submission)
-                        }
-                        onMarkAsAcceptable={() =>
-                          onMarkAsAcceptable(submission)
-                        }
-                      />
-                    ))}
-                  </div>
 
-                  <div
-                    ref={loadMoreRef}
-                    className={cn(
-                      "pt-8 text-muted-foreground text-sm",
-                      sortedSubmissions.length === 0 && "py-0"
-                    )}
-                  >
-                    {isSubmissionsPending && <div>Loading more...</div>}
-                    {!isSubmissionsPending &&
-                      sortedSubmissions.length === 0 && (
-                        <div>No submissions yet.</div>
+                <div className="prose prose-sm max-w-none">
+                  <Markdown>{challenge.metadata.description}</Markdown>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+                  <span>{submissionCount} submissions</span>
+                  <span>·</span>
+                  <span>{timeString}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="pb-8 -pt-6">
+                <div className="divide-y">
+                  {sortedSubmissions.map((submission) => (
+                    <SubmissionCard
+                      key={submission.id}
+                      submission={submission}
+                      isResolving={isPickingWinners}
+                      isWinner={selectedWinners.includes(BigInt(submission.id))}
+                      isIneligible={selectedIneligible.includes(
+                        BigInt(submission.id)
                       )}
-                  </div>
+                      onMarkAsWinner={() => onMarkAsWinner(submission)}
+                      onMarkAsIneligible={() => onMarkAsIneligible(submission)}
+                      onMarkAsAcceptable={() => onMarkAsAcceptable(submission)}
+                    />
+                  ))}
                 </div>
-              )}
-            </div>
+
+                <div
+                  ref={loadMoreRef}
+                  className={cn(
+                    "pt-8 text-muted-foreground text-sm",
+                    sortedSubmissions.length === 0 && "py-0"
+                  )}
+                >
+                  {isSubmissionsPending && <div>Loading more...</div>}
+                  {!isSubmissionsPending && sortedSubmissions.length === 0 && (
+                    <div>No submissions yet.</div>
+                  )}
+                </div>
+
+                {isPickingWinners && (
+                  <div className="flex justify-center">
+                    <Button
+                      disabled={isResolvingChallenge}
+                      onClick={onResolve}
+                      className="rounded-full mx-auto"
+                    >
+                      {isResolvingChallenge ? "Resolving..." : "Resolve"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Sidebar */}
-        <div className="w-[400px] p-6 pb-20">
+        <div className="pl-6 py-6 pb-20 w-[250px]">
           {/* Prize pool */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3 text-gray-600">
@@ -359,8 +396,8 @@ export default function Page({
               </div>
               <div className="flex-auto leading-6">
                 <div className="mb-3 last:mb-0 h-[44px]">
-                  <h4 className="font-medium">Created</h4>
-                  <div className="flex gap-2 items-center text-muted-foreground">
+                  <h4 className="font-medium text-sm">Created</h4>
+                  <div className="flex gap-2 items-center text-sm text-muted-foreground">
                     <div>
                       {challenge.createdAt.toLocaleString(undefined, {
                         dateStyle: "medium",
@@ -371,8 +408,8 @@ export default function Page({
                 </div>
 
                 <div className="mb-3 last:mb-0 h-[44px]">
-                  <h4 className=" font-medium">End</h4>
-                  <div className="flex gap-2 items-center text-muted-foreground">
+                  <h4 className=" font-medium text-sm">End</h4>
+                  <div className="flex gap-2 items-center text-sm text-muted-foreground">
                     <div>
                       {challenge.endsAt.toLocaleString(undefined, {
                         dateStyle: "medium",
@@ -384,48 +421,6 @@ export default function Page({
               </div>
             </div>
           </div>
-
-          {challenge.status !== "completed" && (
-            <div>
-              <div className="flex items-center gap-2 mb-3 text-gray-600">
-                <MousePointerClickIcon className="h-4 w-4" />
-
-                <span className="uppercase font-semibold text-sm">Actions</span>
-              </div>
-
-              <div className="gap-2 flex flex-col">
-                <SubmitButton challenge={challenge} />
-                <ClaimButton challenge={challenge} />
-
-                {canResolve && (
-                  <Button
-                    variant="outline"
-                    className="rounded-full w-full"
-                    disabled={
-                      isResolvingChallenge || challenge.status !== "pending"
-                    }
-                    onClick={() => {
-                      if (isPickingWinners) {
-                        onResolve();
-                      } else {
-                        setActiveTab(ActiveTab.Submissions);
-                        setIsPickingWinners(true);
-                      }
-                    }}
-                  >
-                    {isResolvingChallenge
-                      ? "Resolving..."
-                      : challenge.status === "pending" &&
-                        sortedSubmissions.length === 0
-                      ? "No submissions. Claim funds back"
-                      : !isPickingWinners
-                      ? "Pick winners and ineligible submissions"
-                      : "Resolve Challenge"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

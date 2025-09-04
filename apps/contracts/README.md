@@ -13,7 +13,7 @@ npm run deploy-erc20:base-sepolia # npm run wipe:base-sepolia
 npm run deploy:base-sepolia # npm run wipe:base-sepolia
 
 # mint tokens
-tsx ./scripts/index.ts mint --network base-sepolia --to 0x40B67a5469feC774003dF3BcA8F59155F1932993 --amount 1000
+tsx ./scripts/index.ts mint --network base-sepolia --to 0x634A6c396D72e03C5a919Df40d12158770f08e06 --amount 1000
 
 # set profile 
 tsx ./scripts/index.ts set-profile --network base-sepolia --name "Acme" --description "We do stuff" --website "https://acme.com" --logoURI "https://acme.com/logo.png"

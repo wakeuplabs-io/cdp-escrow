@@ -13,8 +13,7 @@ interface IEscrow is IEscrowErrors, IEscrowEvents, IEscrowStructs {
     function setProfile(
         string calldata name,
         string calldata description,
-        string calldata website,
-        string calldata logoURI
+        string calldata website
     ) external;
 
     /// @notice Read challenger profile

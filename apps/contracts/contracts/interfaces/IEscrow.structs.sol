@@ -14,14 +14,12 @@ interface IEscrowStructs {
      * @param name The name of the challenger
      * @param description The description of the challenger
      * @param website The website of the challenger
-     * @param logoURI The URI of the challenger's logo
      * @param verified Whether the challenger is verified
      */
     struct ChallengerProfile {
         string name;
         string description;
         string website;
-        string logoURI;
         bool verified;
     }
 

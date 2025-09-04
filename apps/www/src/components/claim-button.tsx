@@ -20,18 +20,11 @@ export const ClaimButton: React.FC<{
   }, [challenge.admin, evmAddress]);
 
   // admins can't claim rewards
-  if (isAdmin) return null;
+  if (isAdmin || challenge.status !== "completed") return null;
   return (
     <Button
       variant="outline"
-      className="rounded-full w-full"
-      tooltip={
-        challenge.status === "active"
-          ? "Submissions are still open"
-          : challenge.status === "pending"
-          ? "Waiting for admin resolution"
-          : "You have either claimed your prize or your submission was not accepted"
-      }
+      className="rounded-full"
       disabled={!claimable || isClaiming}
       onClick={onClaim}
     >

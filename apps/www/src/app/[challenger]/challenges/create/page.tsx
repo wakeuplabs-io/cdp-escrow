@@ -99,9 +99,9 @@ export default function CreateChallengePage({
   return (
     <div>
       <div className="border-b">
-        <div className="flex max-w-5xl mx-auto items-center justify-between h-[72px]">
+        <div className="flex max-w-7xl mx-auto items-center justify-between h-[72px]">
           <Link
-            href="/"
+            href="/all/challenges"
             className="flex items-center justify-center h-[46px] w-[46px]  border rounded-full"
           >
             <MoveLeftIcon className="w-4 h-4" />

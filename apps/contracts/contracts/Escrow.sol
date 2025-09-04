@@ -52,14 +52,12 @@ contract Escrow is IEscrow {
     function setProfile(
         string calldata name,
         string calldata description,
-        string calldata website,
-        string calldata logoURI
+        string calldata website
     ) public {
         challengerProfiles[msg.sender] = ChallengerProfile({
             name: name,
             description: description,
             website: website,
-            logoURI: logoURI,
             verified: false
         });
     }
@@ -245,7 +243,7 @@ contract Escrow is IEscrow {
             })
         );
 
-        emit SubmissionCreated(submissionId, challengeId, msg.sender);
+        emit SubmissionCreated(challengeId, submissionId, msg.sender);
     }
 
     /// @inheritdoc IEscrow

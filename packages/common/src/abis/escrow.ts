@@ -374,11 +374,6 @@ export const escrowAbi = [
             type: "string",
           },
           {
-            internalType: "string",
-            name: "logoURI",
-            type: "string",
-          },
-          {
             internalType: "bool",
             name: "verified",
             type: "bool",
@@ -531,11 +526,6 @@ export const escrowAbi = [
       {
         internalType: "string",
         name: "website",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "logoURI",
         type: "string",
       },
     ],

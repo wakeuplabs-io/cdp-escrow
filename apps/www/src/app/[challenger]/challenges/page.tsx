@@ -47,7 +47,7 @@ export default function ChallengesPage({
   return (
     <div>
       <div className="border-b">
-        <div className="flex  items-center justify-between h-[72px] max-w-5xl mx-auto">
+        <div className="flex  items-center justify-between h-[72px] max-w-7xl mx-auto">
           <Logo width={150} height={46} />
 
           <AccountManager />
@@ -59,15 +59,13 @@ export default function ChallengesPage({
           <div
             className="py-10 border-b relative bg-cover bg-center"
             style={{
-              backgroundImage: `url(${
-                profile.logoURI === "" ? "/avatar.webp" : profile.logoURI
-              })`,
+              backgroundImage: `url(/avatar.webp)`,
             }}
           >
             <div className="absolute inset-0 backdrop-blur-3xl bg-black/30"></div>
           </div>
 
-          <div className="max-w-5xl mx-auto relative py-6 flex items-start justify-between">
+          <div className="max-w-7xl mx-auto relative py-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold">
                 {profile.name === ""
@@ -118,7 +116,7 @@ export default function ChallengesPage({
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto flex items-center justify-between py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between py-4">
             <div className="uppercase text-sm font-medium text-muted-foreground py-2">
               Challenges
             </div>
@@ -128,7 +126,7 @@ export default function ChallengesPage({
         </div>
       ) : (
         <div className="border-b">
-          <div className="max-w-5xl mx-auto flex items-center justify-between py-6">
+          <div className="max-w-7xl mx-auto flex items-center justify-between py-6">
             <div className="uppercase text-sm font-medium text-muted-foreground py-2">
               Challenges
             </div>
@@ -139,7 +137,7 @@ export default function ChallengesPage({
       )}
 
       <div className=" mx-auto">
-        <div className="  max-w-5xl mx-auto">
+        <div className="  max-w-7xl mx-auto">
           <div className="divide-y">
             {sortedChallenges.map((challenge, id) => (
               <ChallengeCard key={id} challenge={challenge} />

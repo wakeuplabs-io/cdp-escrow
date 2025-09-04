@@ -29,7 +29,7 @@ export const EditProfile: React.FC<{
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setProfile({ name, description, website, logoURI: "" }).then(() => {
+    setProfile({ name, description, website }).then(() => {
       setIsOpen(false);
       toast.success("Profile updated successfully");
     }).catch((error) => {
