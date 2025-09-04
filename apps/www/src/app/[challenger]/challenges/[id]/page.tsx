@@ -217,11 +217,7 @@ export default function Page({
                       className="flex items-center gap-2"
                     >
                       <Image
-                        src={
-                          !profile || profile.logoURI === ""
-                            ? "/avatar.webp"
-                            : profile.logoURI
-                        }
+                        src={"/avatar.webp"}
                         alt="avatar"
                         className="rounded-full border-2 border-gray-200"
                         width={32}
@@ -400,6 +396,7 @@ export default function Page({
               <div className="gap-2 flex flex-col">
                 <SubmitButton challenge={challenge} />
                 <ClaimButton challenge={challenge} />
+
                 {canResolve && (
                   <Button
                     variant="outline"

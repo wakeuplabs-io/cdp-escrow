@@ -20,10 +20,10 @@ import {
   ArrowLeftIcon,
   ArrowUpIcon,
   QrCodeIcon,
-  UserIcon,
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QrCode from "react-qr-code";
@@ -59,15 +59,7 @@ const Account: React.FC<{
         className="mb-6"
       />
 
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        <button
-          onClick={() => router.push(`/${address}/challenges`)}
-          className="flex justify-start text-sm flex-col gap-2 items-center hover:bg-muted p-2 rounded-md"
-        >
-          <UserIcon className="w-4 h-4" />
-          <div className="text-center">Profile</div>
-        </button>
-
+      <div className="grid grid-cols-2 gap-2 mb-6">
         <button
           onClick={() => setTab(Tab.Deposit)}
           className="flex text-sm flex-col gap-2 items-center justify-center hover:bg-muted p-2 rounded-md"
@@ -400,22 +392,26 @@ export const AccountManager = () => {
   return (
     <>
       {evmAddress ? (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-4 rounded-full border h-[46px] px-4 shrink-0"
-        >
-          <Image
-            src="/avatar.webp"
-            alt="avatar"
-            className="rounded-full"
-            width={18}
-            height={18}
-          />
-          <span className="text-sm">{shortenAddress(evmAddress ?? "")}</span>
-          <span className="text-sm text-muted-foreground">
-            {formatBalance(balance ?? 0n)} USDC
-          </span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-4 rounded-full border h-[46px] px-4 shrink-0"
+          >
+            <span className="text-sm">{shortenAddress(evmAddress ?? "")}</span>
+            <span className="text-sm text-muted-foreground">
+              {formatBalance(balance ?? 0n)} USDC
+            </span>
+          </button>
+          <Link href={`/${evmAddress}/challenges`} className="rounded-full border h-[46px] w-[46px] flex items-center justify-center shrink-0">
+            <Image
+              src="/avatar.webp"
+              alt="avatar"
+              className="rounded-full"
+              width={18}
+              height={18}
+            />
+          </Link>
+        </div>
       ) : (
         <AuthButton
           className="flex items-center gap-2 rounded-full border h-[46px]  shrink-0 text-sm font-normal [&_button]:!bg-transparent [&_button]:!text-foreground [&_button]:!px-4"

@@ -11,7 +11,6 @@ import { useInfiniteScroll } from "@/hooks/infinite-scroll";
 import { shortenAddress } from "@/lib/utils";
 import { useEvmAddress } from "@coinbase/cdp-hooks";
 import { CheckIcon, CopyIcon, GlobeIcon, SettingsIcon } from "lucide-react";
-import Image from "next/image";
 import React, { useMemo } from "react";
 import { Address } from "viem";
 
@@ -56,7 +55,7 @@ export default function ChallengesPage({
       </div>
 
       {profile ? (
-        <div>
+        <div className="border-b">
           <div
             className="py-10 border-b relative bg-cover bg-center"
             style={{
@@ -66,33 +65,10 @@ export default function ChallengesPage({
             }}
           >
             <div className="absolute inset-0 backdrop-blur-3xl bg-black/30"></div>
-
-            <div className="max-w-5xl mx-auto flex items-center justify-end gap-2 z-40 h-10">
-              {isProfileAdmin && (
-                <>
-                  <CreateChallengeButton className="z-10" />
-
-                  <EditProfile profile={profile}>
-                    <button className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center z-10 bg-white">
-                      <SettingsIcon className="h-4 w-4" />
-                    </button>
-                  </EditProfile>
-                </>
-              )}
-            </div>
           </div>
 
-          <div className="max-w-5xl mx-auto relative py-6">
-            <div className="border-2 border-white bg-white w-[80px] rounded-md overflow-hidden -mt-20">
-              <Image
-                src={profile.logoURI === "" ? "/avatar.webp" : profile.logoURI}
-                alt="challenges"
-                width={80}
-                height={80}
-              />
-            </div>
-
-            <div className="mt-4">
+          <div className="max-w-5xl mx-auto relative py-6 flex items-start justify-between">
+            <div>
               <h1 className="text-2xl font-bold">
                 {profile.name === ""
                   ? shortenAddress(challenger as Address)
@@ -112,36 +88,57 @@ export default function ChallengesPage({
                 </button>
               </div>
 
-              <p className="mt-1">{profile.description}</p>
+              <p className="mt-1 text-sm">{profile.description}</p>
             </div>
 
-            {profile.website !== "" && (
-              <button
-                className="mt-6"
-                onClick={() => {
-                  window.open(profile.website ?? "", "_blank");
-                }}
-              >
-                <GlobeIcon className="text-muted-foreground" />
-              </button>
-            )}
+            <div className="flex items-center gap-4 mt-6">
+              {profile.website !== "" && (
+                <button
+                  onClick={() => {
+                    if (profile.website === "") return;
+                    window.open(
+                      profile.website.startsWith("http")
+                        ? profile.website
+                        : `https://${profile.website}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  <GlobeIcon className="text-muted-foreground w-5 h-5" />
+                </button>
+              )}
+
+              {isProfileAdmin && (
+                <EditProfile profile={profile}>
+                  <button>
+                    <SettingsIcon className="text-muted-foreground w-5 h-5" />
+                  </button>
+                </EditProfile>
+              )}
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto flex items-center justify-between py-4">
+            <div className="uppercase text-sm font-medium text-muted-foreground py-2">
+              Challenges
+            </div>
+
+            {isProfileAdmin && <CreateChallengeButton />}
           </div>
         </div>
       ) : (
-        <div className="">
-          <div className="max-w-5xl mx-auto flex items-center justify-end py-6">
+        <div className="border-b">
+          <div className="max-w-5xl mx-auto flex items-center justify-between py-6">
+            <div className="uppercase text-sm font-medium text-muted-foreground py-2">
+              Challenges
+            </div>
+
             <CreateChallengeButton />
           </div>
         </div>
       )}
 
       <div className=" mx-auto">
-        <div className="uppercase text-sm font-medium text-muted-foreground py-2 max-w-5xl mx-auto">
-          Challenges
-        </div>
-
-        <hr />
-
         <div className="  max-w-5xl mx-auto">
           <div className="divide-y">
             {sortedChallenges.map((challenge, id) => (

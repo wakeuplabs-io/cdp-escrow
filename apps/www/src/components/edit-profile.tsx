@@ -23,14 +23,13 @@ export const EditProfile: React.FC<{
   const [name, setName] = useState(profile.name);
   const [description, setDescription] = useState(profile.description);
   const [website, setWebsite] = useState(profile.website);
-  const [logoURI, setLogoURI] = useState(profile.logoURI);
 
 
   const { mutateAsync: setProfile, isPending } = useSetChallengerProfile();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setProfile({ name, description, website, logoURI }).then(() => {
+    setProfile({ name, description, website, logoURI: "" }).then(() => {
       setIsOpen(false);
       toast.success("Profile updated successfully");
     }).catch((error) => {
@@ -93,18 +92,6 @@ export const EditProfile: React.FC<{
                 placeholder="https://acme.dao"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-              />
-            </div>
-
-            <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-2">
-              <span className="text-xs text-muted-foreground absolute left-4 top-1">
-                Logo URI
-              </span>
-              <input
-                className="text-sm text-muted-foreground outline-none w-full"
-                placeholder="https://acme.dao/logo.png"
-                value={logoURI}
-                onChange={(e) => setLogoURI(e.target.value)}
               />
             </div>
           </div>

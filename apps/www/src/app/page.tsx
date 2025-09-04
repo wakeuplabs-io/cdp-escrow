@@ -11,9 +11,15 @@ import { TypeAnimation } from "react-type-animation";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-16">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
+      style={{
+        background:
+          "linear-gradient(135deg, #fed7aa 0%, #ffffff 30%, #ffffff 70%, #fed7aa 100%)",
+      }}
+    >
       {/* Fork button */}
-      <div className="absolute top-6 right-6">
+      <div className="absolute bottom-6 right-6">
         <Button size="sm" className="rounded-full " asChild>
           <a
             href="https://github.com/wakeuplabs-io/cdp-escrow"
@@ -33,32 +39,59 @@ export default function Home() {
         </Button>
       </div>
 
+      {/* Powered by */}
+      <div className="absolute bottom-6 left-6">
+        <p className="text-muted-foreground text-sm">
+          Powered by{" "}
+          <a
+            href="https://wakeuplabs.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            Wakeup Labs
+          </a>
+          {" for "}
+          <a
+            href="https://developers.coinbase.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            Coinbase Developer Platform
+          </a>
+        </p>
+      </div>
+
       <div className="max-w-4xl mx-auto text-center space-y-12">
         {/* Main heading */}
         <div className="space-y-6">
-          <TypeAnimation
-            preRenderFirstString={true}
-            sequence={[
-              "Create bounties for\n Designs",
-              1000,
-              "Create bounties for\n Videos",
-              1000,
-              "Create bounties for\n Websites",
-              1000,
-              "Create bounties for\n Hackathons",
-              1000,
-            ]}
-            wrapper="h1"
-            speed={50}
-            style={{
-              fontSize: "3em",
-              display: "block",
-              fontWeight: "bold",
-              whiteSpace: "pre-line",
-            }}
-            repeat={Infinity}
-          />
-          <p className="text-xl text-muted-foreground font-medium">
+          <div>
+            <h1 className="text-4xl font-light">Create Bounties for</h1>
+            <TypeAnimation
+              preRenderFirstString={true}
+              sequence={[
+                "Designs",
+                1000,
+                "Videos",
+                1000,
+                "Websites",
+                1000,
+                "Hackathons",
+                1000,
+              ]}
+              wrapper="h1"
+              speed={50}
+              style={{
+                fontSize: "5em",
+                display: "block",
+                fontWeight: "bold",
+                whiteSpace: "pre-line",
+              }}
+              repeat={Infinity}
+            />
+          </div>
+          <p className="text-2xl text-muted-foreground font-medium">
             Create Challenge. Get Submissions. Award Winners.
           </p>
         </div>
@@ -66,24 +99,33 @@ export default function Home() {
         {/* Feature icons */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-16 md:gap-24 py-8">
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-12 h-12 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center bg-orange-500/20 rounded-md">
               <BoltIcon className="w-8 h-8 text-orange-500" />
             </div>
-            <p className="text-muted-foreground text-sm">Secure Escrow</p>
+            <p className="text-foreground text-sm font-bold">Secure Escrow</p>
+            <p className="text-muted-foreground text-xs max-w-[200px] text-center">
+              Protect your funds and ensure fair payments to your participants.
+            </p>
           </div>
 
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-12 h-12 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center bg-green-500/20 rounded-md">
               <CurrencyDollarIcon className="w-8 h-8 text-green-500" />
             </div>
-            <p className="text-muted-foreground text-sm">USDC Payments</p>
+            <p className="text-foreground text-sm font-bold">USDC Payments</p>
+            <p className="text-muted-foreground text-xs max-w-[200px] text-center">
+              Fast global payments using the USDC stablecoin.
+            </p>
           </div>
 
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-12 h-12 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center bg-blue-500/20 rounded-md">
               <GlobeAltIcon className="w-8 h-8 text-blue-500" />
             </div>
-            <p className="text-muted-foreground text-sm">Decentralized</p>
+            <p className="text-foreground text-sm font-bold">Decentralized</p>
+            <p className="text-muted-foreground text-xs max-w-[200px] text-center">
+              Built on robust, censorship-resistant infrastructure.
+            </p>
           </div>
         </div>
 
@@ -103,30 +145,6 @@ export default function Home() {
           >
             View Demo
           </Link>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-16">
-          <p className="text-muted-foreground text-sm">
-            Powered by{" "}
-            <a
-              href="https://wakeuplabs.io/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              Wakeup Labs
-            </a>
-            {" for "}
-            <a
-              href="https://developers.coinbase.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              Coinbase Developer Platform
-            </a>
-          </p>
         </div>
       </div>
     </div>
