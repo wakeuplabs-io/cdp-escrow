@@ -21,6 +21,7 @@ export const configByNetwork: Record<
     privateKey: `0x${string}`;
     escrowAddress: `0x${string}`;
     erc20Address: `0x${string}`;
+    blockscoutApiKey: string;
   }
 > = {
   "base-mainnet": {
@@ -29,6 +30,7 @@ export const configByNetwork: Record<
     privateKey: process.env.BASE_PRIVATE_KEY as `0x${string}`,
     escrowAddress: process.env.BASE_ESCROW_ADDRESS as `0x${string}`,
     erc20Address: process.env.BASE_ERC20_ADDRESS as `0x${string}`,
+    blockscoutApiKey: process.env.BASE_BLOCKSCOUT_API_KEY as string,
   },
   "base-sepolia": {
     chain: baseSepolia,
@@ -36,6 +38,7 @@ export const configByNetwork: Record<
     privateKey: process.env.BASE_SEPOLIA_PRIVATE_KEY as `0x${string}`,
     escrowAddress: process.env.BASE_SEPOLIA_ESCROW_ADDRESS as `0x${string}`,
     erc20Address: process.env.BASE_SEPOLIA_ERC20_ADDRESS as `0x${string}`,
+    blockscoutApiKey: process.env.BASE_SEPOLIA_BLOCKSCOUT_API_KEY as string,
   },
 };
 

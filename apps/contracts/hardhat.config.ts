@@ -14,6 +14,33 @@ const config: HardhatUserConfig = {
       accounts: [configByNetwork["base-sepolia"].privateKey],
     },
   },
+  etherscan: {
+    apiKey: {
+      'base-mainnet': configByNetwork["base-sepolia"].blockscoutApiKey,
+      'base-sepolia': configByNetwork["base-sepolia"].blockscoutApiKey,
+    },
+    customChains: [
+      {
+        network: "base-mainnet",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://base.blockscout.com/api",
+          browserURL: "https://base.blockscout.com/",
+        }
+      },
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://base-sepolia.blockscout.com/api",
+          browserURL: "https://base-sepolia.blockscout.com/",
+        }
+      }
+    ]
+  },
+  sourcify: {
+    enabled: false
+  }
 };
 
 export default config;

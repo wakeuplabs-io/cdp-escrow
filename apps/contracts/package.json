@@ -5,9 +5,9 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:base-sepolia": "hardhat ignition deploy ignition/modules/Escrow.ts --network base-sepolia",
+    "deploy:base-sepolia": "hardhat ignition deploy ignition/modules/Escrow.ts --network base-sepolia --verify",
     "wipe:base-sepolia": "hardhat ignition wipe chain-84532 EscrowModule#Escrow",
-    "deploy-erc20:base-sepolia": "hardhat ignition deploy ignition/modules/MockErc20.ts --network base-sepolia",
+    "deploy-erc20:base-sepolia": "hardhat ignition deploy ignition/modules/MockErc20.ts --network base-sepolia --verify",
     "wipe-erc20:base-sepolia": "hardhat ignition wipe chain-84532 MockErc20Module#MockErc20"
   },
   "dependencies": {
