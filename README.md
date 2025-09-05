@@ -3,6 +3,8 @@
 
 A comprehensive example project showcasing Coinbase Developer Platform (CDP) capabilities through a challenge-based escrow system. This platform enables users to create any kind of challenges with reward pools, receive submissions, and distribute prizes in a decentralized manner.
 
+Demo available at: [https://cdp-escrow.wakeuplabs.link/](https://cdp-escrow.wakeuplabs.link/)
+
 ## 🎯 What This Demonstrates
 
 This project showcases key CDP features:
