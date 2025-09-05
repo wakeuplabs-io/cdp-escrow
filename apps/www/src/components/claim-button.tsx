@@ -23,7 +23,6 @@ export const ClaimButton: React.FC<{
   if (isAdmin || challenge.status !== "completed") return null;
   return (
     <Button
-      variant="outline"
       className="rounded-full"
       disabled={!claimable || isClaiming}
       onClick={onClaim}

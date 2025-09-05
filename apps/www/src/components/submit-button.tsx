@@ -42,7 +42,6 @@ export const SubmitButton: React.FC<{
   if (isAdmin) return null;
   return (
     <Button
-      variant="outline"
       tooltip={!validation.isValid ? validation.message : undefined}
       disabled={!validation.isValid || hasSubmission}
       onClick={() => {

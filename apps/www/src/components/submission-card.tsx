@@ -63,6 +63,7 @@ export const SubmissionCard = ({
         {isResolving && (
           <div className="flex items-center gap-2">
             <Button
+              tooltip="Mark as winner"
               onClick={onMarkAsWinner}
               variant="outline"
               className={cn(
@@ -73,16 +74,7 @@ export const SubmissionCard = ({
               🏆
             </Button>
             <Button
-              onClick={onMarkAsAcceptable}
-              variant="outline"
-              className={cn(
-                "rounded-full border h-8 w-8 flex items-center justify-center hover:bg-muted",
-                { "bg-gray-100 border-gray-300": !isWinner && !isIneligible }
-              )}
-            >
-              👍🏼
-            </Button>
-            <Button
+              tooltip="Mark as ineligible"
               onClick={onMarkAsIneligible}
               variant="outline"
               className={cn(
@@ -91,6 +83,17 @@ export const SubmissionCard = ({
               )}
             >
               👎🏼
+            </Button>
+            <Button
+              tooltip="Mark as acceptable"
+              onClick={onMarkAsAcceptable}
+              variant="outline"
+              className={cn(
+                "rounded-full border h-8 w-8 flex items-center justify-center hover:bg-muted",
+                { "bg-gray-100 border-gray-300": !isWinner && !isIneligible }
+              )}
+            >
+              👍🏼
             </Button>
           </div>
         )}

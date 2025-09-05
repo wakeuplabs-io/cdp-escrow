@@ -102,17 +102,20 @@ export const useCreateSubmission = () => {
         receipt.logs
       );
 
-      queryClient.removeQueries({
+      queryClient.invalidateQueries({
         queryKey: QueryKeyFactory.submissions(props.challengeId),
+        refetchType: 'active',
       });
-      queryClient.removeQueries({
+      queryClient.invalidateQueries({
         queryKey: QueryKeyFactory.userSubmissions(
           props.challengeId,
           smartAccount
         ),
+        refetchType: 'active',
       });
-      queryClient.removeQueries({
+      queryClient.invalidateQueries({
         queryKey: QueryKeyFactory.submissionCount(props.challengeId),
+        refetchType: 'active',
       });
 
       return { submissionId, userOperationHash: result.userOperationHash };

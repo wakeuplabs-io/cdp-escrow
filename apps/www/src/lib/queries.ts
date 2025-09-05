@@ -2,8 +2,8 @@ import { Address } from "viem";
 
 export const QueryKeyFactory = {
   challenger: (challenger: Address) => ["challenger", challenger],
-  challenge: (challengeId: number) => ["challenge", challengeId],
-  challenges: (challenger?: string) => ["challenges", challenger],
+  challenge: (challengeId: number) => ["challenges", "detail", challengeId],
+  challenges: (challenger?: string) => ["challenges", "list", challenger],
   submissionCount: (challengeId: number) => [
     "submissions",
     "count",
@@ -11,12 +11,14 @@ export const QueryKeyFactory = {
   ],
   submission: (challengeId: number, submissionId: number) => [
     "submissions",
+    "detail",
     challengeId,
     submissionId,
   ],
-  submissions: (challengeId: number) => ["submissions", challengeId],
+  submissions: (challengeId: number) => ["submissions", "list", challengeId],
   userSubmissions: (challengeId: number, user: Address) => [
     "user-submissions",
+    "list",
     challengeId,
     user,
   ],
@@ -24,10 +26,5 @@ export const QueryKeyFactory = {
     "claimable",
     challengeId,
     user,
-  ],
-  winnerSubmissions: (challengeId: number) => ["winner-submissions", challengeId],
-  ineligibleSubmissions: (challengeId: number) => [
-    "ineligible-submissions",
-    challengeId,
   ],
 };

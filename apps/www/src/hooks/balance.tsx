@@ -29,9 +29,12 @@ export function useWithdraw() {
         calls: [await erc20Service.prepareTransfer(props.amount, props.to)],
         useCdpPaymaster: true, // Use the free CDP paymaster to cover the gas fees
       });
-      
-      queryClient.invalidateQueries({ queryKey: ["balance", smartAccount] });
-      
+
+      queryClient.invalidateQueries({
+        queryKey: ["balance", smartAccount],
+        refetchType: "active",
+      });
+
       return { userOperationHash: result.userOperationHash };
     },
   });

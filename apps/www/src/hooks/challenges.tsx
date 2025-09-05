@@ -131,9 +131,11 @@ export const useCreateChallenge = () => {
       // invalidate cached queries
       queryClient.invalidateQueries({
         queryKey: QueryKeyFactory.challenges(smartAccount),
+        refetchType: 'active',
       });
       queryClient.invalidateQueries({
         queryKey: QueryKeyFactory.challenges(),
+        refetchType: 'active',
       });
 
       return challengeId;
@@ -164,10 +166,15 @@ export const useResolveChallenge = () => {
       });
 
       const challenge = await escrowService.getChallengeById(props.challengeId);
+
       queryClient.setQueryData(
         QueryKeyFactory.challenge(props.challengeId),
         challenge
       );
+      queryClient.invalidateQueries({
+        queryKey: QueryKeyFactory.submissions(props.challengeId),
+        refetchType: 'active',
+      });
 
       return { userOperationHash: result.userOperationHash };
     },

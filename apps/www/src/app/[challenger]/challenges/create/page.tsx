@@ -120,7 +120,7 @@ export default function CreateChallengePage({
             your brief. If no submissions are received by the deadline, you’ll
             be able to reclaim your funds from the challenge page. If
             submissions are received, you’ll classify them as winners,
-            acceptable, or ineligible: winners will share 80% of the pool,
+            acceptable, or ineligible: winners will share 70% of the pool,
             acceptable submissions will share 20%, and ineligible ones will
             receive nothing.
           </div>
