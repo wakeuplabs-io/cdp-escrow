@@ -7,6 +7,7 @@ import { createBundlerClient } from "viem/account-abstraction";
 export const TOKEN_DECIMALS = 18;
 
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK as "base" | "base-sepolia";
+const MULTICALL_ADDRESS = "0xca11bde05977b3631167028862be2a173976ca11"; // for base and base-sepolia
 
 export const ipfsClient = new PinataIpfs(
   process.env.NEXT_PUBLIC_PINATA_JWT as string,
@@ -15,7 +16,7 @@ export const ipfsClient = new PinataIpfs(
 
 export const escrowService = new EscrowService(
   ipfsClient,
-  "0xca11bde05977b3631167028862be2a173976ca11", // for base and base-sepolia
+  MULTICALL_ADDRESS,
   process.env.NEXT_PUBLIC_ESCROW_ADDRESS as Address,
   process.env.NEXT_PUBLIC_ERC20_ADDRESS as Address,
   process.env.NEXT_PUBLIC_RPC_URL as string,

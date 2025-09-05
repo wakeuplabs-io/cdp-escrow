@@ -160,13 +160,13 @@ export default function Page({
   }
   return (
     <div>
-      <div className="border-b">
+      <nav className="border-b">
         <div className="flex items-center justify-between h-[72px] max-w-7xl mx-auto">
           <Logo width={150} height={46} />
 
           <AccountManager />
         </div>
-      </div>
+      </nav>
 
       {/* Tabs navigation */}
       <div className="border-b w-full h-9">

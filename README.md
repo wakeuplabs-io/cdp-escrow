@@ -7,11 +7,10 @@ A comprehensive example project showcasing Coinbase Developer Platform (CDP) cap
 
 This project showcases key CDP features:
 
-- **📧 Embedded Wallets**: Seamless wallet creation using email/SMS authentication
+- **📧 Embedded Wallets**: Seamless wallet creation and recovery using email/SMS authentication
 - **Gas sponsorship**: Sponsor gas for users with coinbase smart wallets.
 - **Onramps**: Fund users wallets with usdc using the onramp feature.
-- **🔗 Smart Contract Integration**: Deployed on Base Sepolia with type-safe interactions  
-- **💰 Token Management**: ERC-20 token escrow and distribution
+- **🔗 Smart Contract Integration**: Deployed on Base Sepolia, interact using Coinbase wallets and it's user operations bundler.
 
 ## 🏗️ Architecture Overview
 
@@ -40,7 +39,7 @@ cdp-escrow/
 2. **Environment Setup**:
    ```bash
    # Clone and install dependencies
-   git clone <repository-url>
+   git clone https://github.com/wakeuplabs-io/cdp-escrow
    cd cdp-escrow
    pnpm install
    ```
@@ -64,7 +63,7 @@ Visit [http://localhost:3000](http://localhost:3000) to interact with the applic
 - **Create Challenges**: Set up challenges with token reward pools
 - **Browse Challenges**: Discover active challenges from the community
 - **Submit Solutions**: Upload your work and compete for rewards
-- **Resolve & Award**: Challenge creators can evaluate and distribute prizes, winners split 80% of the pool, the rest is for valid submissions.
+- **Resolve & Award**: Challenge creators can evaluate and distribute prizes, winners split 70% of the pool, the rest is for valid submissions.
 
 ### CDP Integration Highlights
 - **Zero-Friction Onboarding**: Users sign up with just email/phone
@@ -74,7 +73,7 @@ Visit [http://localhost:3000](http://localhost:3000) to interact with the applic
 
 ## 🔧 Smart Contract Usage
 
-The project includes a comprehensive CLI for interacting with deployed contracts:
+The project includes a comprehensive test suite and a CLI for interacting with deployed contracts:
 
 ### Deployment
 
@@ -212,8 +211,7 @@ This project serves as a foundation for building CDP-powered applications. Key a
 
 ## 📚 Resources
 
-- [CDP Documentation](https://docs.cloud.coinbase.com/cdp/docs)
-- [CDP React Components](https://docs.cloud.coinbase.com/cdp/docs/react-components)  
+- [CDP Documentation](https://docs.cdp.coinbase.com/)
 - [Base Network](https://base.org/)
 - [Hardhat Documentation](https://hardhat.org/)
 - [Next.js Documentation](https://nextjs.org/docs)

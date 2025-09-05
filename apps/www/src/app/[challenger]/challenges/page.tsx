@@ -46,14 +46,15 @@ export default function ChallengesPage({
 
   return (
     <div>
-      <div className="border-b">
+      <nav className="border-b">
         <div className="flex  items-center justify-between h-[72px] max-w-7xl mx-auto">
           <Logo width={150} height={46} />
 
           <AccountManager />
         </div>
-      </div>
+      </nav>
 
+      {/* Profile / Header */}
       {profile ? (
         <div className="border-b">
           <div
@@ -136,21 +137,20 @@ export default function ChallengesPage({
         </div>
       )}
 
-      <div className=" mx-auto">
-        <div className="  max-w-7xl mx-auto">
-          <div className="divide-y">
-            {sortedChallenges.map((challenge, id) => (
-              <ChallengeCard key={id} challenge={challenge} />
-            ))}
-          </div>
+      {/* Challenges */}
+      <div className="  max-w-7xl mx-auto">
+        <div className="divide-y">
+          {sortedChallenges.map((challenge, id) => (
+            <ChallengeCard key={id} challenge={challenge} />
+          ))}
+        </div>
 
-          <div ref={loadMoreRef} className="py-4 text-muted-foreground text-sm">
-            {isPending && <span>Loading more...</span>}
+        <div ref={loadMoreRef} className="py-4 text-muted-foreground text-sm">
+          {isPending && <span>Loading more...</span>}
 
-            {!isPending && sortedChallenges.length === 0 && (
-              <span>No challenges found</span>
-            )}
-          </div>
+          {!isPending && sortedChallenges.length === 0 && (
+            <span>No challenges found</span>
+          )}
         </div>
       </div>
     </div>

@@ -98,7 +98,7 @@ export default function CreateChallengePage({
 
   return (
     <div>
-      <div className="border-b">
+      <nav className="border-b">
         <div className="flex max-w-7xl mx-auto items-center justify-between h-[72px]">
           <Link
             href="/all/challenges"
@@ -109,7 +109,7 @@ export default function CreateChallengePage({
 
           <AccountManager />
         </div>
-      </div>
+      </nav>
 
       <div className="min-h-screen max-w-5xl mx-auto">
         {/* How it works */}
@@ -142,7 +142,7 @@ export default function CreateChallengePage({
             />
           </div>
 
-          {/* Title input */}
+          {/* Pool Size */}
           <div className="bg-muted p-4 rounded-lg relative mb-4">
             <span className="text-xs text-muted-foreground absolute left-4 top-2">
               Pool Size (USDC)
@@ -156,7 +156,7 @@ export default function CreateChallengePage({
             />
           </div>
 
-          {/* Deadline */}
+          {/* Deadline (date and time) */}
           <div className="mb-6">
             <div className="flex gap-4">
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>

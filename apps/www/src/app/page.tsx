@@ -73,7 +73,7 @@ export default function Home() {
         {/* Main heading */}
         <div className="space-y-6">
           <div>
-            <h1 className={`text-[4em] -mb-4 font-light ${dmSans.className}`}>
+            <h1 className={`text-[4em] -mb-4 font-normal ${dmSans.className}`}>
               Create bounties for
             </h1>
             <TypeAnimation
@@ -93,7 +93,7 @@ export default function Home() {
               style={{
                 fontSize: "4em",
                 display: "block",
-                fontWeight: "bold",
+                fontWeight: "700",
                 whiteSpace: "pre-line",
                 fontFamily: dmSans.style.fontFamily,
               }}
@@ -150,8 +150,9 @@ export default function Home() {
             <Link href="/all/challenges">Get Started</Link>
           </Button>
 
+          {/* TODO: add link when available */}
           <Link
-            href="/all/challenges"
+            href="#"
             className="text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             View Demo

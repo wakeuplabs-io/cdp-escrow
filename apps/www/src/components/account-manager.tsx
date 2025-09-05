@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QrCode from "react-qr-code";
 import { Tooltip } from "react-tooltip";
@@ -48,7 +47,6 @@ const Account: React.FC<{
   setTab: (tab: Tab) => void;
 }> = ({ setTab, address, balance }) => {
   const { signOut } = useSignOut();
-  const router = useRouter();
 
   return (
     <>

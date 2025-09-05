@@ -170,7 +170,7 @@ export default function Page({
           </div>
         </div>
 
-        {/* submit and cancel buttons */}
+        {/* Submit and Cancel buttons */}
         <div className="flex justify-end gap-2 mb-20">
           <Button
             variant="outline"
