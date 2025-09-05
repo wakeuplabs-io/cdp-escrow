@@ -6,8 +6,14 @@ import {
   CurrencyDollarIcon,
   GlobeAltIcon,
 } from "@heroicons/react/24/outline";
+import { DM_Sans } from "next/font/google";
 import Link from "next/link";
 import { TypeAnimation } from "react-type-animation";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+});
 
 export default function Home() {
   return (
@@ -67,31 +73,36 @@ export default function Home() {
         {/* Main heading */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-4xl font-light">Create Bounties for</h1>
+            <h1 className={`text-[4em] -mb-4 font-light ${dmSans.className}`}>
+              Create bounties for
+            </h1>
             <TypeAnimation
               preRenderFirstString={true}
               sequence={[
-                "Designs",
+                "designs",
                 1000,
-                "Videos",
+                "videos",
                 1000,
-                "Websites",
+                "websites",
                 1000,
-                "Hackathons",
+                "hackathons",
                 1000,
               ]}
               wrapper="h1"
               speed={50}
               style={{
-                fontSize: "5em",
+                fontSize: "4em",
                 display: "block",
                 fontWeight: "bold",
                 whiteSpace: "pre-line",
+                fontFamily: dmSans.style.fontFamily,
               }}
               repeat={Infinity}
             />
           </div>
-          <p className="text-2xl text-muted-foreground font-medium">
+          <p
+            className={`text-xl text-muted-foreground font-medium ${dmSans.className}`}
+          >
             Create Challenge. Get Submissions. Award Winners.
           </p>
         </div>
