@@ -170,7 +170,7 @@ tsx ./scripts/index.ts mint \
 ## 🌐 Deployed Contracts
 
 **Base Sepolia Testnet**: 
-- Escrow:`0xFd9A033f605Dd70eaDc17922B43E50D8a344F594`
+- Escrow:`0x046FF7b1a9662893d43E0934C126aA07e1625c4e`
 - Mock ERC20: `0xa44e1a19B9334d7FfF8AF0D0783041a83aEb5a49`
 
 

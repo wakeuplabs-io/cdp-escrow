@@ -154,7 +154,7 @@ const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
       <Alert variant="default" className="bg-[#FFF5E6] border-none">
         <AlertCircleIcon color="blue" />
         <AlertTitle className="text-sm font-normal">
-          Make sure to send USDC on Base
+          Make sure to send USDC on <span className="font-bold">Base Sepolia</span>
         </AlertTitle>
       </Alert>
 
