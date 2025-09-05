@@ -18,9 +18,10 @@ export const ResolveButton: React.FC<{
   challenge: Challenge;
   winners: Submission[];
   ineligible: Submission[];
-  submissions: Submission[];
-}> = ({ challenge, winners, ineligible, submissions }) => {
+  submissionsCount: number;
+}> = ({ challenge, winners, ineligible, submissionsCount }) => {
   const [isOpen, setIsOpen] = useState(false);
+
   const { mutateAsync: resolveChallenge, isPending: isResolvingChallenge } =
     useResolveChallenge();
 
@@ -43,8 +44,8 @@ export const ResolveButton: React.FC<{
   }, [challenge, winners, ineligible, resolveChallenge]);
 
   const acceptableCount = useMemo(() => {
-    return submissions.length - winners.length - ineligible.length;
-  }, [submissions, winners, ineligible]);
+    return submissionsCount - winners.length - ineligible.length;
+  }, [submissionsCount, winners, ineligible]);
 
   const winnerAmount = useMemo(() => {
     if (winners.length === 0) {
@@ -97,7 +98,7 @@ export const ResolveButton: React.FC<{
         </DialogHeader>
 
         <div className="text-sm text-muted-foreground mb-4">
-          {ineligible.length === submissions.length ? (
+          {ineligible.length === submissionsCount ? (
             <div>
               All submissions marked as ineligible. You&apos;ll get your funds back.
             </div>

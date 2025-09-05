@@ -287,7 +287,7 @@ export default function Page({
                         challenge={challenge}
                         winners={selectedWinners}
                         ineligible={selectedIneligible}
-                        submissions={sortedSubmissions}
+                        submissionsCount={submissionCount ?? 0}
                       />
                     </div>
                   </div>

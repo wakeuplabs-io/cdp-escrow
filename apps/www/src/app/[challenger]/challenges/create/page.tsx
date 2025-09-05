@@ -121,7 +121,7 @@ export default function CreateChallengePage({
             be able to reclaim your funds from the challenge page. If
             submissions are received, you’ll classify them as winners,
             acceptable, or ineligible: winners will share 70% of the pool,
-            acceptable submissions will share 20%, and ineligible ones will
+            acceptable submissions will share 30%, and ineligible ones will
             receive nothing.
           </div>
         </div>
