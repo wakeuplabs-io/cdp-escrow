@@ -1,9 +1,9 @@
 import { cn, shortenAddress } from "@/lib/utils";
 import { Submission } from "@cdp/common/src/types/submission";
-import { CheckIcon, StarIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Markdown from "react-markdown";
 import { SubmissionStatusBadge } from "./status-badge";
+import { Button } from "./ui/button";
 
 export const SubmissionCard = ({
   submission,
@@ -62,33 +62,36 @@ export const SubmissionCard = ({
 
         {isResolving && (
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={onMarkAsWinner}
+              variant="outline"
               className={cn(
-                "text-green-500 rounded-full border border-green-500 h-7 w-7 flex items-center justify-center",
-                { "bg-green-500/10": isWinner }
+                "rounded-full border h-8 w-8 flex items-center justify-center hover:bg-muted",
+                { "bg-gray-100 border-gray-300": isWinner }
               )}
             >
-              <StarIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onMarkAsIneligible}
-              className={cn(
-                "text-red-500 rounded-full border border-red-500 h-7 w-7 flex items-center justify-center",
-                { "bg-red-500/10": isIneligible }
-              )}
-            >
-              <XIcon className="w-4 h-4" />
-            </button>
-            <button
+              🏆
+            </Button>
+            <Button
               onClick={onMarkAsAcceptable}
+              variant="outline"
               className={cn(
-                "text-zinc-500 rounded-full border border-zinc-500 h-7 w-7 flex items-center justify-center",
-                { "bg-zinc-500/10": !isWinner && !isIneligible }
+                "rounded-full border h-8 w-8 flex items-center justify-center hover:bg-muted",
+                { "bg-gray-100 border-gray-300": !isWinner && !isIneligible }
               )}
             >
-              <CheckIcon className="w-4 h-4" />
-            </button>
+              👍🏼
+            </Button>
+            <Button
+              onClick={onMarkAsIneligible}
+              variant="outline"
+              className={cn(
+                "rounded-full border h-8 w-8 flex items-center justify-center hover:bg-muted",
+                { "bg-gray-100 border-gray-300": isIneligible }
+              )}
+            >
+              👎🏼
+            </Button>
           </div>
         )}
       </div>

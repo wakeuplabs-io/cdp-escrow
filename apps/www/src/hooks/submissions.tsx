@@ -4,7 +4,7 @@ import {
   ClaimParams,
   CreateSubmissionParams,
 } from "@cdp/common/src/services/escrow";
-import { Submission, UserSubmission } from "@cdp/common/src/types/submission";
+import { Submission } from "@cdp/common/src/types/submission";
 import { useCurrentUser, useSendUserOperation } from "@coinbase/cdp-hooks";
 import {
   useInfiniteQuery,
@@ -102,26 +102,18 @@ export const useCreateSubmission = () => {
         receipt.logs
       );
 
-      const submission = await escrowService.getSubmissionById(
-        BigInt(props.challengeId),
-        BigInt(submissionId)
-      );
-
-      queryClient.setQueryData(
-        QueryKeyFactory.submissions(props.challengeId),
-        (old: Submission[]) => [...old, submission]
-      );
-      queryClient.setQueryData(
-        QueryKeyFactory.userSubmissions(props.challengeId, smartAccount),
-        (old: UserSubmission[]) => [
-          ...old,
-          { challengeId: props.challengeId, submissionId },
-        ]
-      );
-      queryClient.setQueryData(
-        QueryKeyFactory.submissionCount(props.challengeId),
-        (old: number) => old + 1
-      );
+      queryClient.removeQueries({
+        queryKey: QueryKeyFactory.submissions(props.challengeId),
+      });
+      queryClient.removeQueries({
+        queryKey: QueryKeyFactory.userSubmissions(
+          props.challengeId,
+          smartAccount
+        ),
+      });
+      queryClient.removeQueries({
+        queryKey: QueryKeyFactory.submissionCount(props.challengeId),
+      });
 
       return { submissionId, userOperationHash: result.userOperationHash };
     },

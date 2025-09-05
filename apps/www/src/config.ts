@@ -33,3 +33,7 @@ export const bundlerClient = createBundlerClient({
   }),
   transport: http(process.env.NEXT_PUBLIC_CDP_BUNDLER_URL as string), 
 });
+
+export const publicClient = createPublicClient({
+  transport: http(process.env.NEXT_PUBLIC_RPC_URL as string),
+});

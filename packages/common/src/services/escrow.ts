@@ -411,11 +411,9 @@ export class EscrowService {
       functionName: "getSubmission",
       args: [challengeId, submissionId],
     });
-    console.log("submission", submission);
     const metadata = (await this.ipfsClient.downloadJSON(
       submission.metadataUri
     )) as any;
-    console.log("metadata", metadata);
 
     return {
       id: Number(submissionId),
