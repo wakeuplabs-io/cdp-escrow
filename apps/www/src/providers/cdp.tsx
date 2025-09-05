@@ -1,5 +1,6 @@
 "use client";
 
+import { CDP_CREATE_ACCOUNT_TYPE, CDP_PROJECT_ID } from "@/config";
 import { type Config } from "@coinbase/cdp-hooks";
 import { CDPReactProvider, type AppConfig } from "@coinbase/cdp-react/components/CDPReactProvider";
 import { type Theme } from "@coinbase/cdp-react/theme";
@@ -27,8 +28,8 @@ interface ProvidersProps {
 }
 
 const CDP_CONFIG: Config = {
-  projectId: process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? "",
-  createAccountOnLogin: process.env.NEXT_PUBLIC_CDP_CREATE_ACCOUNT_TYPE === "evm-smart" ? "evm-smart" : "evm-eoa",
+  projectId: CDP_PROJECT_ID,
+  createAccountOnLogin: CDP_CREATE_ACCOUNT_TYPE === "evm-smart" ? "evm-smart" : "evm-eoa",
 };
 
 const APP_CONFIG: AppConfig = {

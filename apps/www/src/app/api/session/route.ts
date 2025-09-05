@@ -1,4 +1,5 @@
-import { generateJWT } from "@/lib/cdp-session";
+import { CDP_BASE_URL } from "@/config";
+import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 // Types for session token request
@@ -9,6 +10,7 @@ interface SessionTokenRequest {
   }>;
   assets?: string[];
 }
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +42,14 @@ export async function POST(request: NextRequest) {
     // Generate JWT for authentication
     let jwtToken: string;
     try {
-      jwtToken = await generateJWT(keyName, keySecret);
+      jwtToken = await generateJwt({
+        apiKeyId: keyName,
+        apiKeySecret: keySecret,
+        requestMethod: "POST",
+        requestHost: CDP_BASE_URL.split("//")[1],
+        requestPath: "/onramp/v1/token",
+        expiresIn: 120, // optional (defaults to 120 seconds)
+      });
     } catch (error) {
       // Provide more helpful error message
       if (
@@ -68,21 +77,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Make request to Coinbase API
-    const response = await fetch(
-      "https://api.developer.coinbase.com/onramp/v1/token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${jwtToken}`,
-        },
-        body: JSON.stringify({
-          addresses,
-          ...(assets && { assets }),
-        }),
-      }
-    );
+    const response = await fetch(`${CDP_BASE_URL}/onramp/v1/token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${jwtToken}`,
+      },
+      body: JSON.stringify({
+        addresses,
+        ...(assets && { assets }),
+      }),
+    });
 
     const responseText = await response.text();
 
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
     let data;
     try {
       data = JSON.parse(responseText);
-    } catch  {
+    } catch {
       return NextResponse.json(
         {
           error: "Invalid response from CDP API",

@@ -7,12 +7,12 @@ A comprehensive example project showcasing Coinbase Developer Platform (CDP) cap
 
 This project showcases key CDP features:
 
-- **📧 Embedded Wallets**: Seamless wallet creation and recovery using email/SMS authentication
+- **Embedded Wallets**: Seamless wallet creation and recovery using email/SMS authentication
 - **Gas sponsorship**: Sponsor gas for users with coinbase smart wallets.
 - **Onramps**: Fund users wallets with usdc using the onramp feature.
-- **🔗 Smart Contract Integration**: Deployed on Base Sepolia, interact using Coinbase wallets and it's user operations bundler.
+- **Smart Contract Integration**: Deployed on Base Sepolia, interact using Coinbase wallets and it's user operations bundler.
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 The project consists of three main components:
 
@@ -32,7 +32,7 @@ cdp-escrow/
 1. **CDP Project Setup**:
    - Sign up at [CDP Portal](https://portal.cdp.coinbase.com)
    - Create a new project and copy your Project ID
-   - Generate API credentials 
+   - Generate API credentials for the onramp
    - Configure CORS origins for your domain for embedded wallets
    - Adjust gas sponsorships limits as desired
 
@@ -69,7 +69,6 @@ Visit [http://localhost:3000](http://localhost:3000) to interact with the applic
 - **Zero-Friction Onboarding**: Users sign up with just email/phone
 - **Embedded Wallet**: CDP handles wallet creation and management
 - **Trustful Onramp**: Provide your users with a onramp they can trust.
-
 
 ## 🔧 Smart Contract Usage
 
@@ -186,11 +185,9 @@ The escrow system consists of:
 
 ### CDP Integration Points
 
-1. **Authentication**: Email/SMS login creates embedded wallets automatically
-2. **Transaction Management**: CDP handles gas estimation and transaction broadcasting
-3. **Gas Sponsorship**: Sponsor transaction fees for users using Coinbase Smart Wallets
-4. **Onramp Integration**: Enable users to fund wallets directly with fiat currency
-5. **Network Abstraction**: Seamless Base network integration with low fees
+1. **Authentication**: Email/SMS login creates embedded wallets automatically. We took leverage of ui provided by coinbase to get this running in no time. The related code can be found between [AccountManager](apps/www/src/components/account-manager.tsx) and the [CdpProvider](apps/www/src/providers/cdp.tsx)
+2. **Gas Sponsorship**: Sponsor transaction fees for users using Coinbase Smart Wallets. You can see how to send transactions with sponsored gas in any hook at `hooks` that sends transactions like for [challenges](apps/www/src/hooks/challenges.tsx) or with [withdraw](apps/www/src/hooks/balance.tsx)
+3. **Onramp Integration**: Enable users to fund wallets directly with fiat currency. Generating an onramp url consists in creating a session token and opening the corresponding url. You can see how to do the former [here](apps/www/src/app/api/session/route.ts) and the latter [here](apps/www/src/components/account-manager.tsx)
 
 ### Reward Distribution Logic
 
