@@ -3,26 +3,6 @@ import { EscrowService } from "@cdp/common/src/services/escrow";
 import { PinataIpfs } from "@cdp/common/src/services/ipfs";
 import { Address, createPublicClient, http } from "viem";
 import { createBundlerClient } from "viem/account-abstraction";
-
-// validate all env variables are set
-const requiredEnvVariables = [
-  "NEXT_PUBLIC_NETWORK",
-  "NEXT_PUBLIC_PINATA_JWT",
-  "NEXT_PUBLIC_PINATA_GATEWAY",
-  "NEXT_PUBLIC_ESCROW_ADDRESS",
-  "NEXT_PUBLIC_ERC20_ADDRESS",
-  "NEXT_PUBLIC_RPC_URL",
-  "NEXT_PUBLIC_CDP_BUNDLER_URL",
-  "NEXT_PUBLIC_CDP_PROJECT_ID",
-  "NEXT_PUBLIC_CDP_CREATE_ACCOUNT_TYPE"
-];
-
-requiredEnvVariables.forEach((envVariable) => {
-  if (!process.env[envVariable]) {
-    throw new Error(`${envVariable} is not set`);
-  }
-});
-
 export const TOKEN_DECIMALS = 18;
 
 export const CDP_CREATE_ACCOUNT_TYPE = process.env.NEXT_PUBLIC_CDP_CREATE_ACCOUNT_TYPE as "evm-smart" | "evm-eoa";

@@ -208,6 +208,7 @@ This project serves as a foundation for building CDP-powered applications. Key a
 
 ## 📚 Resources
 
+- [Live Demo](https://cdp-escrow.wakeuplabs.link/)
 - [CDP Documentation](https://docs.cdp.coinbase.com/)
 - [Base Network](https://base.org/)
 - [Hardhat Documentation](https://hardhat.org/)
