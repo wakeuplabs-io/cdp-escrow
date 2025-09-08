@@ -9,8 +9,9 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TOKEN_DECIMALS } from "@/config";
+import { CDP_ONRAMP_BASE_URL, NETWORK, TOKEN_DECIMALS } from "@/config";
 import { useBalance, useWithdraw } from "@/hooks/balance";
+import { useOnrampUsdc } from "@/hooks/onramp";
 import { formatBalance, shortenAddress } from "@/lib/utils";
 import { useEvmAddress, useSignOut } from "@coinbase/cdp-hooks";
 import { AuthButton } from "@coinbase/cdp-react/components/AuthButton";
@@ -29,7 +30,7 @@ import QrCode from "react-qr-code";
 import { Tooltip } from "react-tooltip";
 import { toast } from "sonner";
 import { isAddress, parseUnits } from "viem";
-import { Alert, AlertTitle } from "./ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Input } from "./ui/input";
 
 enum Tab {
@@ -54,8 +55,20 @@ const Account: React.FC<{
         address={address}
         balance={balance}
         balanceLabel="USDC"
-        className="mb-6"
+        className="mb-2"
       />
+
+      {NETWORK === "base-sepolia" && (
+        <Alert
+          variant="default"
+          className="bg-[#FFF5E6] border-none mb-6 justify-center flex"
+        >
+          <AlertCircleIcon color="blue" />
+          <AlertTitle className="text-sm font-normal">
+            Your account is on <span className="font-bold">Base Sepolia</span>
+          </AlertTitle>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-2 gap-2 mb-6">
         <button
@@ -90,42 +103,16 @@ const Account: React.FC<{
 const Onramp: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
   const { evmAddress } = useEvmAddress();
   const [onrampAmount, setOnrampAmount] = useState("");
-  const [pending, setPending] = useState(false);
-
-  const onOnramp = useCallback(async () => {
-    if (!evmAddress) return;
-
-    setPending(true);
-
-    try {
-      const res = await fetch("/api/session", {
-        method: "POST",
-        body: JSON.stringify({
-          addresses: [{ address: evmAddress, blockchains: ["base"] }],
-          assets: ["USDC"],
-        }),
-      });
-      const { token } = await res.json();
-
-      // open onramp as popup
-      window.open(
-        `${process.env.NEXT_PUBLIC_CDP_ONRAMP_BASE_URL}/buy?assets=USDC&defaultAsset=USDC&fiatCurrency=USD&presetCryptoAmount=${onrampAmount}&sessionToken=${token}`,
-        "Onramp",
-        "width=500,height=800,scrollbars=no,resizable=no"
-      );
-      setTab(Tab.WaitingOnramp);
-    } finally {
-      setPending(false);
-    }
-  }, [evmAddress, onrampAmount, setTab]);
+  const { onramp, isPending } = useOnrampUsdc();
 
   if (!evmAddress) return null;
-
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onOnramp();
+        onramp(onrampAmount).then(() => {
+          setTab(Tab.WaitingOnramp);
+        });
       }}
       className="flex flex-col gap-4"
     >
@@ -135,8 +122,32 @@ const Onramp: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
         onChange={(e) => setOnrampAmount(e.target.value)}
       />
 
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Creating Order..." : "Onramp"}
+      {CDP_ONRAMP_BASE_URL.includes("sandbox") && (
+        <Alert variant="default" className="bg-[#FFF5E6] border-none">
+          <AlertCircleIcon color="blue" />
+          <AlertTitle className="text-sm font-normal">
+            You&apos;re onramping USDC on{" "}
+            <span className="font-bold">Base Sepolia</span>
+          </AlertTitle>
+          <AlertDescription className="break-words">
+            <p className="break-words">
+              The{" "}
+              <a
+                href="https://docs.cdp.coinbase.com/onramp-&-offramp/integration/sandbox-testing"
+                target="_blank"
+                className="font-bold inline"
+              >
+                Sandbox
+              </a>{" "}
+              wont&apos;t give you any token but it&apos;ll allow you to test
+              the whole flow
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? "Creating Order..." : "Onramp"}
       </Button>
     </form>
   );
@@ -148,17 +159,25 @@ const Receive: React.FC<{ setTab: (tab: Tab) => void }> = ({}) => {
 
   if (!evmAddress) return null;
   return (
-    <div className="flex flex-col gap-4">
-      <QrCode className="h-40 w-40 mx-auto" value={evmAddress} />
+    <div className="flex flex-col">
+      <QrCode className="h-40 w-40 mx-auto mb-6" value={evmAddress} />
 
-      <Alert variant="default" className="bg-[#FFF5E6] border-none">
-        <AlertCircleIcon color="blue" />
-        <AlertTitle className="text-sm font-normal">
-          Make sure to send USDC on <span className="font-bold">Base Sepolia</span>
-        </AlertTitle>
-      </Alert>
+      <Address
+        address={evmAddress}
+        balance={balance}
+        balanceLabel="USDC"
+        className="mb-2"
+      />
 
-      <Address address={evmAddress} balance={balance} balanceLabel="USDC" />
+      {NETWORK === "base-sepolia" && (
+        <Alert variant="default" className="bg-[#FFF5E6] border-none">
+          <AlertCircleIcon color="blue" />
+          <AlertTitle className="text-sm font-normal">
+            Make sure to send USDC on{" "}
+            <span className="font-bold">Base Sepolia</span>
+          </AlertTitle>
+        </Alert>
+      )}
     </div>
   );
 };
@@ -236,7 +255,7 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
         />
       </div>
 
-      <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-6">
+      <div className="bg-muted rounded-md px-4 py-3 flex items-center  gap-2 relative pt-6 mb-2">
         <span className="text-xs text-muted-foreground absolute left-4 top-1">
           Amount
         </span>
@@ -247,6 +266,19 @@ const Withdraw: React.FC<{ setTab: (tab: Tab) => void }> = ({ setTab }) => {
           onChange={(e) => setAmount(e.target.value)}
         />
       </div>
+
+      {NETWORK === "base-sepolia" && (
+        <Alert
+          variant="default"
+          className="bg-[#FFF5E6] border-none mb-6 justify-center flex"
+        >
+          <AlertCircleIcon color="blue" />
+          <AlertTitle className="text-sm font-normal">
+            Your are withdrawing from{" "}
+            <span className="font-bold">Base Sepolia</span>
+          </AlertTitle>
+        </Alert>
+      )}
 
       <div data-tooltip-id="error-tooltip">
         <Button
@@ -400,7 +432,10 @@ export const AccountManager = () => {
               {formatBalance(balance ?? 0n)} USDC
             </span>
           </button>
-          <Link href={`/${evmAddress}/challenges`} className="rounded-full border h-[46px] w-[46px] flex items-center justify-center shrink-0">
+          <Link
+            href={`/${evmAddress}/challenges`}
+            className="rounded-full border h-[46px] w-[46px] flex items-center justify-center shrink-0"
+          >
             <Image
               src="/avatar.webp"
               alt="avatar"

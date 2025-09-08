@@ -198,6 +198,15 @@ The escrow system consists of:
 - **Ineligible Submissions**: Receive no rewards
 - **No Submissions**: Pool returns to challenge creator
 
+### Network
+
+Currently project is set to work in `base sepolia`. If you wish to deploy it all to mainnet these are some things you may need to do:
+- Deploy contracts on mainnet, adjusting the token in the constructor to be a mainnet available token.
+- Maybe implement some proxy for the contracts to allow for future updates and fixes.
+- On the web adjust env variables, particularly contract addresses, network, rpc urls and onramp base url.
+- You may need to get authorization from Coinbase to enable onramps on mainnet.
+And that should be it, test and go live!
+
 ## 🛠️ Development & Extension
 
 This project serves as a foundation for building CDP-powered applications. Key areas for extension:

@@ -10,6 +10,7 @@ export const CDP_PROJECT_ID = process.env.NEXT_PUBLIC_CDP_PROJECT_ID as string;
 export const NETWORK = process.env.NEXT_PUBLIC_NETWORK as "base" | "base-sepolia";
 export const MULTICALL_ADDRESS = "0xca11bde05977b3631167028862be2a173976ca11"; // for base and base-sepolia
 export const CDP_BASE_URL = "https://api.developer.coinbase.com";
+export const CDP_ONRAMP_BASE_URL = process.env.NEXT_PUBLIC_CDP_ONRAMP_BASE_URL as string;
 
 export const ipfsClient = new PinataIpfs(
   process.env.NEXT_PUBLIC_PINATA_JWT as string,
