@@ -74,11 +74,11 @@ export const ResolveButton: React.FC<{
   }, [challenge, winners, acceptableCount]);
 
   const errors = useMemo(() => {
-    if (winners.length === 0 && ineligible.length === 0) {
+    if (winners.length === 0 && ineligible.length === 0 && submissionsCount > 0) {
       return ["You must select at least one winner or ineligible submission"];
     }
     return [];
-  }, [winners, ineligible]);
+  }, [winners, ineligible, submissionsCount]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
