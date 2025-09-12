@@ -173,6 +173,7 @@ tsx ./scripts/index.ts mint \
 - Escrow:`0x046FF7b1a9662893d43E0934C126aA07e1625c4e`
 - Mock ERC20: `0xa44e1a19B9334d7FfF8AF0D0783041a83aEb5a49`
 
+> Current website deployment is also using the MockERC20 contract. The `mint` method is public so you can mint yourself some tokens from [the explorer itself](https://base-sepolia.blockscout.com/address/0xa44e1a19B9334d7FfF8AF0D0783041a83aEb5a49?tab=write_contract#0x40c10f19)
 
 ## 🔍 Technical Deep Dive
 
