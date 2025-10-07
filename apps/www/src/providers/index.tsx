@@ -6,8 +6,9 @@ import QueryProvider from "./query";
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <CdpProvider>{children}
-      <Toaster />
+      <CdpProvider>
+        {children}
+        <Toaster />
       </CdpProvider>
     </QueryProvider>
   );

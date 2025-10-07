@@ -150,9 +150,10 @@ export default function Home() {
             <Link href="/all/challenges">Get Started</Link>
           </Button>
 
-          {/* TODO: add link when available */}
+          
           <Link
-            href="#"
+            href="https://youtu.be/jREx_R20YJI?si=MuIaTRCcvWYUQ3Cr"
+            target="_blank"
             className="text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             View Demo
